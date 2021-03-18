@@ -16,19 +16,18 @@
 
 package com.lodz.android.zxingdemo;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
-import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Implements support for barcode scanning preferences.
@@ -57,9 +56,9 @@ public final class PreferencesFragment
                                     PreferencesActivity.KEY_DECODE_PDF417);
     disableLastCheckedPref();
 
-    EditTextPreference customProductSearch = (EditTextPreference)
-        preferences.findPreference(PreferencesActivity.KEY_CUSTOM_PRODUCT_SEARCH);
-    customProductSearch.setOnPreferenceChangeListener(new CustomSearchURLValidator());
+//    EditTextPreference customProductSearch = (EditTextPreference)
+//        preferences.findPreference(PreferencesActivity.KEY_CUSTOM_PRODUCT_SEARCH);
+//    customProductSearch.setOnPreferenceChangeListener(new CustomSearchURLValidator());
   }
 
   private static CheckBoxPreference[] findDecodePrefs(PreferenceScreen preferences, String... keys) {

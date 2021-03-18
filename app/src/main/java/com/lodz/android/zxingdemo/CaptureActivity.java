@@ -53,7 +53,6 @@ import com.google.zxing.ResultPoint;
 import com.lodz.android.zxingdemo.camera.CameraManager;
 import com.lodz.android.zxingdemo.result.ResultHandler;
 import com.lodz.android.zxingdemo.result.ResultHandlerFactory;
-import com.lodz.android.zxingdemo.result.supplement.SupplementalInfoRetriever;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -98,7 +97,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private Collection<BarcodeFormat> decodeFormats;
   private Map<DecodeHintType,?> decodeHints;
   private String characterSet;
-  private InactivityTimer inactivityTimer;
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
 
@@ -125,7 +123,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     setContentView(R.layout.capture);
 
     hasSurface = false;
-    inactivityTimer = new InactivityTimer(this);
     beepManager = new BeepManager(this);
     ambientLightManager = new AmbientLightManager(this);
 
@@ -179,7 +176,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     beepManager.updatePrefs();
     ambientLightManager.start(cameraManager);
 
-    inactivityTimer.onResume();
 
     Intent intent = getIntent();
 
@@ -299,7 +295,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       handler.quitSynchronously();
       handler = null;
     }
-    inactivityTimer.onPause();
     ambientLightManager.stop();
     beepManager.close();
     cameraManager.closeDriver();
@@ -310,12 +305,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       surfaceHolder.removeCallback(this);
     }
     super.onPause();
-  }
-
-  @Override
-  protected void onDestroy() {
-    inactivityTimer.shutdown();
-    super.onDestroy();
   }
 
   @Override
@@ -392,7 +381,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
   public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
-    inactivityTimer.onActivity();
     lastResult = rawResult;
     ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(this, rawResult);
 
@@ -478,11 +466,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-    if (resultHandler.getDefaultButtonID() != null && prefs.getBoolean(PreferencesActivity.KEY_AUTO_OPEN_WEB, false)) {
-      resultHandler.handleButtonPress(resultHandler.getDefaultButtonID());
-      return;
-    }
-
     statusView.setVisibility(View.GONE);
     viewfinderView.setVisibility(View.GONE);
     resultView.setVisibility(View.VISIBLE);
@@ -535,10 +518,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     TextView supplementTextView = (TextView) findViewById(R.id.contents_supplement_text_view);
     supplementTextView.setText("");
     supplementTextView.setOnClickListener(null);
-    if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-        PreferencesActivity.KEY_SUPPLEMENTAL, true)) {
-      SupplementalInfoRetriever.maybeInvokeRetrieval(supplementTextView, resultHandler.getResult(), this);
-    }
   }
 
   // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.

@@ -35,11 +35,8 @@
     <string name="msg_unmount_usb">抱歉，无法访问 SD 卡。</string>
     <string name="preferences_actions_title">扫描成功</string>
     <string name="preferences_auto_focus_title">自动对焦</string>
-    <string name="preferences_auto_open_web_title">自动打开网页</string>
     <string name="preferences_bulk_mode_summary">连续扫描并保存多个条码</string>
     <string name="preferences_bulk_mode_title">批量扫描模式</string>
-    <string name="preferences_custom_product_search_summary" formatted="false">替换：％s=内容，％f=格式，％t=类型</string>
-    <string name="preferences_custom_product_search_title">自定义搜索网址</string>
     <string name="preferences_decode_1D_industrial_title">一维码：工业</string>
     <string name="preferences_decode_1D_product_title">一维码：商品</string>
     <string name="preferences_decode_Aztec_title">Aztec</string>
@@ -63,11 +60,7 @@
     <string name="preferences_name">选项</string>
     <string name="preferences_orientation_title">不自动旋转</string>
     <string name="preferences_play_beep_title">播放提示音</string>
-    <string name="preferences_result_title">搜索设置</string>
     <string name="preferences_scanning_title">条码类型</string>
-    <string name="preferences_search_country">搜索引擎国别</string>
-    <string name="preferences_supplemental_summary">尝试检索关于条码内容的更多信息</string>
-    <string name="preferences_supplemental_title">检索更多信息</string>
     <string name="preferences_vibrate_title">振动</string>
     <string name="result_text">找到纯文本</string>
 </resources>
