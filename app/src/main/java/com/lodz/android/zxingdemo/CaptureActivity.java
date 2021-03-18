@@ -107,7 +107,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private AmbientLightManager ambientLightManager;
 
   private Button mSettingsBtn;
-  private Button mHelpBtn;
 
   ViewfinderView getViewfinderView() {
     return viewfinderView;
@@ -143,17 +142,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intents.FLAG_NEW_DOC);
         intent.setClassName(CaptureActivity.this, PreferencesActivity.class.getName());
-        startActivity(intent);
-      }
-    });
-
-    mHelpBtn = findViewById(R.id.help_btn);
-    mHelpBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.setClassName(CaptureActivity.this, HelpActivity.class.getName());
         startActivity(intent);
       }
     });

@@ -141,11 +141,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".HelpActivity"
-            android:label="@string/menu_help"
-            android:screenOrientation="user"
-            android:stateNotNeeded="true" />
     </application>
 
 </manifest>
