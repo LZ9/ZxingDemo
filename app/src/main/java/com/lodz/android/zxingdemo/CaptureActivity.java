@@ -53,9 +53,6 @@ import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
 import com.lodz.android.zxingdemo.camera.CameraManager;
 import com.lodz.android.zxingdemo.clipboard.ClipboardInterface;
-import com.lodz.android.zxingdemo.history.HistoryActivity;
-import com.lodz.android.zxingdemo.history.HistoryItem;
-import com.lodz.android.zxingdemo.history.HistoryManager;
 import com.lodz.android.zxingdemo.result.ResultButtonListener;
 import com.lodz.android.zxingdemo.result.ResultHandler;
 import com.lodz.android.zxingdemo.result.ResultHandlerFactory;
@@ -84,8 +81,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   private static final String[] ZXING_URLS = { "http://zxing.appspot.com/scan", "zxing://scan/" };
 
-  private static final int HISTORY_REQUEST_CODE = 0x0000bacc;
-
   private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
       EnumSet.of(ResultMetadataType.ISSUE_NUMBER,
                  ResultMetadataType.SUGGESTED_PRICE,
@@ -107,12 +102,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private Collection<BarcodeFormat> decodeFormats;
   private Map<DecodeHintType,?> decodeHints;
   private String characterSet;
-  private HistoryManager historyManager;
   private InactivityTimer inactivityTimer;
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
 
-  private Button mHistoryBtn;
   private Button mSettingsBtn;
   private Button mHelpBtn;
 
@@ -143,17 +136,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-    mHistoryBtn = findViewById(R.id.history_btn);
-    mHistoryBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.setClassName(CaptureActivity.this, HistoryActivity.class.getName());
-        startActivityForResult(intent, HISTORY_REQUEST_CODE);
-      }
-    });
-
     mSettingsBtn = findViewById(R.id.settings_btn);
     mSettingsBtn.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -183,8 +165,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     super.onResume();
     
     // historyManager must be initialized here to update the history preference
-    historyManager = new HistoryManager(this);
-    historyManager.trimHistory();
 
     // CameraManager must be initialized here, not in onCreate(). This is necessary because we don't
     // want to open the camera driver and measure the screen size if we're going to show the help on
@@ -386,17 +366,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     return super.onKeyDown(keyCode, event);
   }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    if (resultCode == RESULT_OK && requestCode == HISTORY_REQUEST_CODE && historyManager != null) {
-      int itemNumber = intent.getIntExtra(Intents.History.ITEM_NUMBER, -1);
-      if (itemNumber >= 0) {
-        HistoryItem historyItem = historyManager.buildHistoryItem(itemNumber);
-        decodeOrStoreSavedBitmap(null, historyItem.getResult());
-      }
-    }
-  }
-
   private void decodeOrStoreSavedBitmap(Bitmap bitmap, Result result) {
     // Bitmap isn't used yet -- will be used soon
     if (handler == null) {
@@ -448,7 +417,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     boolean fromLiveScan = barcode != null;
     if (fromLiveScan) {
-      historyManager.addHistoryItem(rawResult, resultHandler);
       // Then not from history, so beep/vibrate and we have an image to draw on
       beepManager.playBeepSoundAndVibrate();
       drawResultPoints(barcode, scaleFactor, rawResult);
@@ -591,10 +559,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     supplementTextView.setOnClickListener(null);
     if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
         PreferencesActivity.KEY_SUPPLEMENTAL, true)) {
-      SupplementalInfoRetriever.maybeInvokeRetrieval(supplementTextView,
-                                                     resultHandler.getResult(),
-                                                     historyManager,
-                                                     this);
+      SupplementalInfoRetriever.maybeInvokeRetrieval(supplementTextView, resultHandler.getResult(), this);
     }
 
     int buttonCount = resultHandler.getButtonCount();

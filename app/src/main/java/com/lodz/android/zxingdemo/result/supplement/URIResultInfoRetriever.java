@@ -22,7 +22,6 @@ import android.widget.TextView;
 import com.google.zxing.client.result.URIParsedResult;
 import com.lodz.android.zxingdemo.HttpHelper;
 import com.lodz.android.zxingdemo.R;
-import com.lodz.android.zxingdemo.history.HistoryManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,8 +34,8 @@ final class URIResultInfoRetriever extends SupplementalInfoRetriever {
   private final URIParsedResult result;
   private final String redirectString;
 
-  URIResultInfoRetriever(TextView textView, URIParsedResult result, HistoryManager historyManager, Context context) {
-    super(textView, historyManager);
+  URIResultInfoRetriever(TextView textView, URIParsedResult result, Context context) {
+    super(textView);
     redirectString = context.getString(R.string.msg_redirect);
     this.result = result;
   }

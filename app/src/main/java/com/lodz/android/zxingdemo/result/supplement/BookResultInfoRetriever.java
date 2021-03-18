@@ -22,7 +22,6 @@ import android.widget.TextView;
 import com.lodz.android.zxingdemo.HttpHelper;
 import com.lodz.android.zxingdemo.LocaleManager;
 import com.lodz.android.zxingdemo.R;
-import com.lodz.android.zxingdemo.history.HistoryManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,8 +42,8 @@ final class BookResultInfoRetriever extends SupplementalInfoRetriever {
   private final String source;
   private final Context context;
   
-  BookResultInfoRetriever(TextView textView, String isbn, HistoryManager historyManager, Context context) {
-    super(textView, historyManager);
+  BookResultInfoRetriever(TextView textView, String isbn, Context context) {
+    super(textView);
     this.isbn = isbn;
     this.source = context.getString(R.string.msg_google_books);
     this.context = context;
