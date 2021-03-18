@@ -60,7 +60,6 @@ import com.lodz.android.zxingdemo.result.ResultButtonListener;
 import com.lodz.android.zxingdemo.result.ResultHandler;
 import com.lodz.android.zxingdemo.result.ResultHandlerFactory;
 import com.lodz.android.zxingdemo.result.supplement.SupplementalInfoRetriever;
-import com.lodz.android.zxingdemo.share.ShareActivity;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -113,7 +112,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
 
-  private Button mShareBtn;
   private Button mHistoryBtn;
   private Button mSettingsBtn;
   private Button mHelpBtn;
@@ -144,17 +142,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     ambientLightManager = new AmbientLightManager(this);
 
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-
-    mShareBtn = findViewById(R.id.share_btn);
-    mShareBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.setClassName(CaptureActivity.this, ShareActivity.class.getName());
-        startActivity(intent);
-      }
-    });
 
     mHistoryBtn = findViewById(R.id.history_btn);
     mHistoryBtn.setOnClickListener(new View.OnClickListener() {

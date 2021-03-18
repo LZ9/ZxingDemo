@@ -140,26 +140,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".share.ShareActivity"
-            android:screenOrientation="user"
-            android:stateNotNeeded="true">
-            <intent-filter>
-                <action android:name="com.google.zxing.client.android.SHARE" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+
         <activity
             android:name=".history.HistoryActivity"
             android:label="@string/history_title"
-            android:stateNotNeeded="true" />
-        <activity
-            android:name=".share.BookmarkPickerActivity"
-            android:label="@string/bookmark_picker_name"
-            android:stateNotNeeded="true" />
-        <activity
-            android:name=".share.AppPickerActivity"
-            android:label="@string/app_picker_name"
             android:stateNotNeeded="true" />
 
         <activity
