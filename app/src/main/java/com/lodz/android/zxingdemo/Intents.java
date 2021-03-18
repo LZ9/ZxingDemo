@@ -170,11 +170,6 @@ public final class Intents {
      */
     public static final String RESULT_BYTE_SEGMENTS_PREFIX = "SCAN_RESULT_BYTE_SEGMENTS_";
 
-    /**
-     * Setting this to false will not save scanned codes in the history. Specified as a {@code boolean}.
-     */
-    public static final String SAVE_HISTORY = "SAVE_HISTORY";
-
     private Scan() {
     }
   }
