@@ -35,6 +35,6 @@ public final class ResultHandlerFactory {
   public static ResultHandler makeResultHandler(CaptureActivity activity, Result rawResult) {
     ParsedResult result = ResultParser.parseResult(rawResult);
     AnkoToastKt.toastShort(activity, result.getType().toString());
-    return new TextResultHandler(activity, result, rawResult);
+    return new TextResultHandler(result);
   }
 }

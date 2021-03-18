@@ -38,7 +38,6 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -53,7 +52,6 @@ import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
 import com.lodz.android.zxingdemo.camera.CameraManager;
 import com.lodz.android.zxingdemo.clipboard.ClipboardInterface;
-import com.lodz.android.zxingdemo.result.ResultButtonListener;
 import com.lodz.android.zxingdemo.result.ResultHandler;
 import com.lodz.android.zxingdemo.result.ResultHandlerFactory;
 import com.lodz.android.zxingdemo.result.supplement.SupplementalInfoRetriever;
@@ -549,21 +547,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         PreferencesActivity.KEY_SUPPLEMENTAL, true)) {
       SupplementalInfoRetriever.maybeInvokeRetrieval(supplementTextView, resultHandler.getResult(), this);
     }
-
-    int buttonCount = resultHandler.getButtonCount();
-    ViewGroup buttonView = (ViewGroup) findViewById(R.id.result_button_view);
-    buttonView.requestFocus();
-    for (int x = 0; x < ResultHandler.MAX_BUTTON_COUNT; x++) {
-      TextView button = (TextView) buttonView.getChildAt(x);
-      if (x < buttonCount) {
-        button.setVisibility(View.VISIBLE);
-        button.setText(resultHandler.getButtonText(x));
-        button.setOnClickListener(new ResultButtonListener(resultHandler, x));
-      } else {
-        button.setVisibility(View.GONE);
-      }
-    }
-
   }
 
   // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.
