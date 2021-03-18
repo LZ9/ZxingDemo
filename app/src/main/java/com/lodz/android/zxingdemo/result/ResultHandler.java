@@ -34,10 +34,8 @@ import com.google.zxing.client.result.ParsedResultType;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.zxingdemo.Contents;
 import com.lodz.android.zxingdemo.Intents;
-import com.lodz.android.zxingdemo.LocaleManager;
 import com.lodz.android.zxingdemo.PreferencesActivity;
 import com.lodz.android.zxingdemo.R;
-import com.lodz.android.zxingdemo.book.SearchBookContentsActivity;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -356,9 +354,6 @@ public abstract class ResultHandler {
     sendSMSFromUri("smsto:", contents);
   }
 
-  final void sendSMS(String phoneNumber, String body) {
-    sendSMSFromUri("smsto:" + phoneNumber, body);
-  }
 
   private void sendSMSFromUri(String uri, String body) {
     Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uri));
@@ -382,52 +377,6 @@ public abstract class ResultHandler {
     }
     putExtra(intent, "sms_body", body);
     intent.putExtra("compose_mode", true);
-    launchIntent(intent);
-  }
-
-  final void dialPhone(String phoneNumber) {
-    launchIntent(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneNumber)));
-  }
-
-  final void dialPhoneFromUri(String uri) {
-    launchIntent(new Intent(Intent.ACTION_DIAL, Uri.parse(uri)));
-  }
-
-  final void openMap(String geoURI) {
-    launchIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(geoURI)));
-  }
-
-  /**
-   * Do a geo search using the address as the query.
-   *
-   * @param address The address to find
-   */
-  final void searchMap(String address) {
-    launchIntent(new Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(address))));
-  }
-
-  final void getDirections(double latitude, double longitude) {
-    launchIntent(new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google." +
-        LocaleManager.getCountryTLD(activity) + "/maps?f=d&daddr=" + latitude + ',' + longitude)));
-  }
-
-  // Uses the mobile-specific version of Product Search, which is formatted for small screens.
-  final void openProductSearch(String upc) {
-    Uri uri = Uri.parse("http://www.google." + LocaleManager.getProductSearchCountryTLD(activity) +
-        "/m/products?q=" + upc + "&source=zxing");
-    launchIntent(new Intent(Intent.ACTION_VIEW, uri));
-  }
-
-  final void openBookSearch(String isbn) {
-    Uri uri = Uri.parse("http://books.google." + LocaleManager.getBookSearchCountryTLD(activity) +
-        "/books?vid=isbn" + isbn);
-    launchIntent(new Intent(Intent.ACTION_VIEW, uri));
-  }
-
-  final void searchBookContents(String isbnOrUrl) {
-    Intent intent = new Intent(Intents.SearchBookContents.ACTION);
-    intent.setClassName(activity, SearchBookContentsActivity.class.getName());
-    putExtra(intent, Intents.SearchBookContents.ISBN, isbnOrUrl);
     launchIntent(intent);
   }
 
