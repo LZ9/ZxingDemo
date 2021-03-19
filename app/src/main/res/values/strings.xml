@@ -55,8 +55,6 @@
     <string name="preferences_front_light_summary">设置闪光灯模式</string>
     <string name="preferences_front_light_title">闪光灯</string>
     <string name="preferences_general_title">扫描设置</string>
-    <string name="preferences_invert_scan_summary">扫描黑色背景上的白色条码。仅适用于部分设备。</string>
-    <string name="preferences_invert_scan_title">反色</string>
     <string name="preferences_name">选项</string>
     <string name="preferences_orientation_title">不自动旋转</string>
     <string name="preferences_play_beep_title">播放提示音</string>

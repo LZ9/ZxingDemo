@@ -153,9 +153,9 @@ final class CameraConfigurationManager {
         safeMode);
 
     if (!safeMode) {
-      if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
-        CameraConfigurationUtils.setInvertColor(parameters);
-      }
+//      if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
+//        CameraConfigurationUtils.setInvertColor(parameters);
+//      }
 
       if (!prefs.getBoolean(PreferencesActivity.KEY_DISABLE_BARCODE_SCENE_MODE, true)) {
         CameraConfigurationUtils.setBarcodeSceneMode(parameters);
