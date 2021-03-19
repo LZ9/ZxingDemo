@@ -37,7 +37,6 @@ public final class PreferencesActivity extends Activity {
   public static final String KEY_PLAY_BEEP = "preferences_play_beep";
   public static final String KEY_VIBRATE = "preferences_vibrate";
   public static final String KEY_FRONT_LIGHT_MODE = "preferences_front_light_mode";
-  public static final String KEY_BULK_MODE = "preferences_bulk_mode";
   public static final String KEY_AUTO_FOCUS = "preferences_auto_focus";
   public static final String KEY_DISABLE_AUTO_ORIENTATION = "preferences_orientation";
 
