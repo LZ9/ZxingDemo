@@ -161,13 +161,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     handler = null;
     lastResult = null;
 
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+//    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+//
+//    if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_AUTO_ORIENTATION, true)) {
+      setRequestedOrientation(getCurrentOrientation());// 不使用自动旋转
+//    } else {
+//      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+//    }
 
-    if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_AUTO_ORIENTATION, true)) {
-      setRequestedOrientation(getCurrentOrientation());
-    } else {
-      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-    }
 
     resetStatusView();
 

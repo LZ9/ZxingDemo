@@ -27,7 +27,6 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
-import com.lodz.android.zxingdemo.PreferencesActivity;
 import com.lodz.android.zxingdemo.camera.open.CameraFacing;
 import com.lodz.android.zxingdemo.camera.open.OpenCamera;
 
@@ -150,7 +149,7 @@ final class CameraConfigurationManager {
     boolean isDisableContinuousFocus = false;
     CameraConfigurationUtils.setFocus(
         parameters,
-            prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true),
+            true,//自动对焦
             isDisableContinuousFocus,
             safeMode);
 
