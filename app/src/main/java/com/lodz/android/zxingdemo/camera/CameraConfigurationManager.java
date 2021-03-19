@@ -146,26 +146,23 @@ final class CameraConfigurationManager {
 
     initializeTorch(parameters, prefs, safeMode);
 
+    // 是否禁用连续对焦使用标准对焦
+    boolean isDisableContinuousFocus = false;
     CameraConfigurationUtils.setFocus(
         parameters,
-        prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true),
-        prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false),
-        safeMode);
+            prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true),
+            isDisableContinuousFocus,
+            safeMode);
 
     if (!safeMode) {
-//      if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
-//        CameraConfigurationUtils.setInvertColor(parameters);
-//      }
+  //        CameraConfigurationUtils.setInvertColor(parameters);// 配置使用反色扫描
 
-      if (!prefs.getBoolean(PreferencesActivity.KEY_DISABLE_BARCODE_SCENE_MODE, true)) {
-        CameraConfigurationUtils.setBarcodeSceneMode(parameters);
-      }
+  //        CameraConfigurationUtils.setBarcodeSceneMode(parameters);// 配置进行条形码场景匹配
 
-      if (!prefs.getBoolean(PreferencesActivity.KEY_DISABLE_METERING, true)) {
-        CameraConfigurationUtils.setVideoStabilization(parameters);
-        CameraConfigurationUtils.setFocusArea(parameters);
-        CameraConfigurationUtils.setMetering(parameters);
-      }
+  //        // 配置使用距离测量
+  //        CameraConfigurationUtils.setVideoStabilization(parameters);
+  //        CameraConfigurationUtils.setFocusArea(parameters);
+  //        CameraConfigurationUtils.setMetering(parameters);
 
       //SetRecordingHint to true also a workaround for low framerate on Nexus 4
       //https://stackoverflow.com/questions/14131900/extreme-camera-lag-on-nexus-4
@@ -236,9 +233,9 @@ final class CameraConfigurationManager {
   private void doSetTorch(Camera.Parameters parameters, boolean newSetting, boolean safeMode) {
     CameraConfigurationUtils.setTorch(parameters, newSetting);
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    if (!safeMode && !prefs.getBoolean(PreferencesActivity.KEY_DISABLE_EXPOSURE, true)) {
-      CameraConfigurationUtils.setBestExposure(parameters, newSetting);
-    }
+//    if (!safeMode && !prefs.getBoolean(PreferencesActivity.KEY_DISABLE_EXPOSURE, true)) {
+//      CameraConfigurationUtils.setBestExposure(parameters, newSetting);//配置曝光
+//    }
   }
 
 }

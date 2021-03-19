@@ -42,11 +42,6 @@
     <string name="preferences_decode_PDF417_title">PDF417 (测试)</string>
     <string name="preferences_decode_QR_title">二维码</string>
     <string name="preferences_device_bug_workarounds_title">设备适配</string>
-    <string name="preferences_disable_barcode_scene_mode_title">不进行条形码场景匹配</string>
-    <string name="preferences_disable_continuous_focus_summary">使用标准对焦模式</string>
-    <string name="preferences_disable_continuous_focus_title">不持续对焦</string>
-    <string name="preferences_disable_exposure_title">不曝光</string>
-    <string name="preferences_disable_metering_title">不使用距离测量</string>
     <string name="preferences_front_light_auto">自动</string>
     <string name="preferences_front_light_off">关</string>
     <string name="preferences_front_light_on">开</string>
