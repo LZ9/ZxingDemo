@@ -72,7 +72,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private static final String TAG = CaptureActivity.class.getSimpleName();
 
   private static final long DEFAULT_INTENT_RESULT_DURATION_MS = 1500L;
-  private static final long BULK_MODE_SCAN_DELAY_MS = 1000L;
 
   private static final String[] ZXING_URLS = { "http://zxing.appspot.com/scan", "zxing://scan/" };
 
@@ -99,7 +98,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
 
-  private Button mSettingsBtn;
   private Button mFlashBtn;
 
 
@@ -126,19 +124,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     hasSurface = false;
     beepManager = new BeepManager(this);
     ambientLightManager = new AmbientLightManager(this);
-
-    PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-
-    mSettingsBtn = findViewById(R.id.settings_btn);
-    mSettingsBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.setClassName(CaptureActivity.this, PreferencesActivity.class.getName());
-        startActivity(intent);
-      }
-    });
 
     mFlashBtn = findViewById(R.id.flash_btn);
     mFlashBtn.setOnClickListener(new View.OnClickListener() {

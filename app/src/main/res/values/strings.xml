@@ -11,16 +11,5 @@
     <string name="msg_default_type">类型</string>
     <string name="msg_error">错误</string>
     <string name="msg_invalid_value">值无效</string>
-    <string name="preferences_decode_1D_industrial_title">一维码：工业</string>
-    <string name="preferences_decode_1D_product_title">一维码：商品</string>
-    <string name="preferences_decode_Aztec_title">Aztec</string>
-    <string name="preferences_decode_Data_Matrix_title">Data Matrix</string>
-    <string name="preferences_decode_PDF417_title">PDF417 (测试)</string>
-    <string name="preferences_decode_QR_title">二维码</string>
-    <string name="preferences_front_light_auto">自动</string>
-    <string name="preferences_front_light_off">关</string>
-    <string name="preferences_front_light_on">开</string>
-    <string name="preferences_name">选项</string>
-    <string name="preferences_scanning_title">条码类型</string>
     <string name="result_text">找到纯文本</string>
 </resources>
