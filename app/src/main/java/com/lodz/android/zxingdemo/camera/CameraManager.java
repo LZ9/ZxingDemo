@@ -148,7 +148,7 @@ public final class CameraManager {
     if (theCamera != null && !previewing) {
       theCamera.getCamera().startPreview();
       previewing = true;
-      autoFocusManager = new AutoFocusManager(context, theCamera.getCamera());
+      autoFocusManager = new AutoFocusManager(theCamera.getCamera());
     }
   }
 
@@ -182,7 +182,7 @@ public final class CameraManager {
       }
       configManager.setTorch(theCamera.getCamera(), newSetting);
       if (wasAutoFocusManager) {
-        autoFocusManager = new AutoFocusManager(context, theCamera.getCamera());
+        autoFocusManager = new AutoFocusManager(theCamera.getCamera());
         autoFocusManager.start();
       }
     }

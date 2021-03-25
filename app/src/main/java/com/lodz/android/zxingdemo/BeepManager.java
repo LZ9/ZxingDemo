@@ -18,12 +18,10 @@ package com.lodz.android.zxingdemo;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.Closeable;
@@ -51,8 +49,7 @@ final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
   }
 
   synchronized void updatePrefs() {
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-    playBeep = shouldBeep(prefs, activity);
+    playBeep = shouldBeep(activity);
     vibrate = true;
     if (playBeep && mediaPlayer == null) {
       // The volume on STREAM_SYSTEM is not adjustable, and users found it too loud,
@@ -72,7 +69,7 @@ final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
     }
   }
 
-  private static boolean shouldBeep(SharedPreferences prefs, Context activity) {
+  private static boolean shouldBeep(Context activity) {
     boolean shouldPlayBeep = true;
     if (shouldPlayBeep) {
       // See if sound settings overrides this

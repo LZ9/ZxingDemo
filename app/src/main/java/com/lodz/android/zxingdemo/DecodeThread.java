@@ -17,10 +17,8 @@
 package com.lodz.android.zxingdemo;
 
 
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
@@ -63,7 +61,6 @@ final class DecodeThread extends Thread {
 
     // The prefs can't change while the thread is running, so pick them up once here.
     if (decodeFormats == null || decodeFormats.isEmpty()) {
-      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
       decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
       decodeFormats.addAll(DecodeFormatManager.PRODUCT_FORMATS);
       decodeFormats.addAll(DecodeFormatManager.INDUSTRIAL_FORMATS);
