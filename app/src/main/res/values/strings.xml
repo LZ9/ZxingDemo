@@ -2,6 +2,7 @@
     <string name="app_name">条码扫描器</string>
     <string name="button_ok">确定</string>
     <string name="menu_settings">设置</string>
+    <string name="menu_flash">闪光灯</string>
     <string name="msg_camera_framework_bug">很遗憾，Android 相机出现问题。你可能需要重启设备。</string>
     <string name="msg_default_format">格式</string>
     <string name="msg_default_meta">元数据</string>
@@ -10,7 +11,6 @@
     <string name="msg_default_type">类型</string>
     <string name="msg_error">错误</string>
     <string name="msg_invalid_value">值无效</string>
-    <string name="preferences_actions_title">扫描成功</string>
     <string name="preferences_decode_1D_industrial_title">一维码：工业</string>
     <string name="preferences_decode_1D_product_title">一维码：商品</string>
     <string name="preferences_decode_Aztec_title">Aztec</string>
@@ -20,12 +20,7 @@
     <string name="preferences_front_light_auto">自动</string>
     <string name="preferences_front_light_off">关</string>
     <string name="preferences_front_light_on">开</string>
-    <string name="preferences_front_light_summary">设置闪光灯模式</string>
-    <string name="preferences_front_light_title">闪光灯</string>
-    <string name="preferences_general_title">扫描设置</string>
     <string name="preferences_name">选项</string>
-    <string name="preferences_play_beep_title">播放提示音</string>
     <string name="preferences_scanning_title">条码类型</string>
-    <string name="preferences_vibrate_title">振动</string>
     <string name="result_text">找到纯文本</string>
 </resources>

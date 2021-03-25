@@ -100,6 +100,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private AmbientLightManager ambientLightManager;
 
   private Button mSettingsBtn;
+  private Button mFlashBtn;
+
 
   ViewfinderView getViewfinderView() {
     return viewfinderView;
@@ -135,6 +137,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         intent.addFlags(Intents.FLAG_NEW_DOC);
         intent.setClassName(CaptureActivity.this, PreferencesActivity.class.getName());
         startActivity(intent);
+      }
+    });
+
+    mFlashBtn = findViewById(R.id.flash_btn);
+    mFlashBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        cameraManager.setTorch(!cameraManager.getTorchState());
       }
     });
 
@@ -325,13 +335,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       case KeyEvent.KEYCODE_CAMERA:
         // Handle these events so they don't launch the Camera app
         return true;
-      // Use volume up/down to turn on light
-      case KeyEvent.KEYCODE_VOLUME_DOWN:
-        cameraManager.setTorch(false);
-        return true;
-      case KeyEvent.KEYCODE_VOLUME_UP:
-        cameraManager.setTorch(true);
-        return true;
+
     }
     return super.onKeyDown(keyCode, event);
   }

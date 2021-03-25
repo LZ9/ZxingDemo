@@ -225,7 +225,7 @@ final class CameraConfigurationManager {
   }
 
   private void initializeTorch(Camera.Parameters parameters, SharedPreferences prefs, boolean safeMode) {
-    boolean currentSetting = FrontLightMode.readPref(prefs) == FrontLightMode.ON;
+    boolean currentSetting = false;
     doSetTorch(parameters, currentSetting, safeMode);
   }
 
