@@ -25,7 +25,6 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
-import com.lodz.android.zxingdemo.camera.open.CameraFacing;
 import com.lodz.android.zxingdemo.camera.open.OpenCamera;
 
 
@@ -87,7 +86,7 @@ final class CameraConfigurationManager {
     Log.i(TAG, "Camera at: " + cwRotationFromNaturalToCamera);
 
     // Still not 100% sure about this. But acts like we need to flip this:
-    if (camera.getFacing() == CameraFacing.FRONT) {
+    if (camera.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
       cwRotationFromNaturalToCamera = (360 - cwRotationFromNaturalToCamera) % 360;
       Log.i(TAG, "Front camera overriden to: " + cwRotationFromNaturalToCamera);
     }
@@ -95,7 +94,7 @@ final class CameraConfigurationManager {
     cwRotationFromDisplayToCamera =
         (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
     Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
-    if (camera.getFacing() == CameraFacing.FRONT) {
+    if (camera.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
       Log.i(TAG, "Compensating rotation for front camera");
       cwNeededRotation = (360 - cwRotationFromDisplayToCamera) % 360;
     } else {

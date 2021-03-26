@@ -58,13 +58,13 @@ public final class OpenCameraInterface {
       while (cameraId < numCameras) {
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
         Camera.getCameraInfo(cameraId, cameraInfo);
-        if (CameraFacing.values()[cameraInfo.facing] == CameraFacing.BACK) {
+        if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
           break;
         }
         cameraId++;
       }
       if (cameraId == numCameras) {
-        Log.i(TAG, "No camera facing " + CameraFacing.BACK + "; returning camera #0");
+        Log.i(TAG, "No camera facing Camera.CameraInfo.CAMERA_FACING_BACK; returning camera #0");
         cameraId = 0;
       }
     }
@@ -77,9 +77,9 @@ public final class OpenCameraInterface {
       return null;
     }
     return new OpenCamera(cameraId,
-                          camera,
-                          CameraFacing.values()[cameraInfo.facing],
-                          cameraInfo.orientation);
+            camera,
+            cameraInfo.facing,
+            cameraInfo.orientation);
   }
 
 }

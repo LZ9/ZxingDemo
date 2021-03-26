@@ -26,10 +26,10 @@ public final class OpenCamera {
   
   private final int index;
   private final Camera camera;
-  private final CameraFacing facing;
+  private final int facing;
   private final int orientation;
   
-  public OpenCamera(int index, Camera camera, CameraFacing facing, int orientation) {
+  public OpenCamera(int index, Camera camera, int facing, int orientation) {
     this.index = index;
     this.camera = camera;
     this.facing = facing;
@@ -40,7 +40,7 @@ public final class OpenCamera {
     return camera;
   }
 
-  public CameraFacing getFacing() {
+  public int getFacing() {
     return facing;
   }
 
