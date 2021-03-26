@@ -47,7 +47,6 @@ final class DecodeThread extends Thread {
 
   DecodeThread(CaptureActivity activity,
                Collection<BarcodeFormat> decodeFormats,
-               Map<DecodeHintType,?> baseHints,
                String characterSet,
                ResultPointCallback resultPointCallback) {
 
@@ -55,9 +54,6 @@ final class DecodeThread extends Thread {
     handlerInitLatch = new CountDownLatch(1);
 
     hints = new EnumMap<>(DecodeHintType.class);
-    if (baseHints != null) {
-      hints.putAll(baseHints);
-    }
 
     // The prefs can't change while the thread is running, so pick them up once here.
     if (decodeFormats == null || decodeFormats.isEmpty()) {

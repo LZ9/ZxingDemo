@@ -25,7 +25,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -43,7 +42,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
 import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
@@ -91,7 +89,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private String sourceUrl;
   private ScanFromWebPageManager scanFromWebPageManager;
   private Collection<BarcodeFormat> decodeFormats;
-  private Map<DecodeHintType,?> decodeHints;
   private String characterSet;
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
@@ -170,72 +167,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     ambientLightManager.start(cameraManager);
 
 
-    Intent intent = getIntent();
-
     source = IntentSource.NONE;
     sourceUrl = null;
     scanFromWebPageManager = null;
     decodeFormats = null;
     characterSet = null;
-
-    if (intent != null) {
-
-      String action = intent.getAction();
-      String dataString = intent.getDataString();
-
-      if (Intents.Scan.ACTION.equals(action)) {
-
-        // Scan the formats the intent requested, and return the result to the calling activity.
-        source = IntentSource.NATIVE_APP_INTENT;
-        decodeFormats = DecodeFormatManager.parseDecodeFormats(intent);
-        decodeHints = DecodeHintManager.parseDecodeHints(intent);
-
-        if (intent.hasExtra(Intents.Scan.WIDTH) && intent.hasExtra(Intents.Scan.HEIGHT)) {
-          int width = intent.getIntExtra(Intents.Scan.WIDTH, 0);
-          int height = intent.getIntExtra(Intents.Scan.HEIGHT, 0);
-          if (width > 0 && height > 0) {
-            cameraManager.setManualFramingRect(width, height);
-          }
-        }
-
-        if (intent.hasExtra(Intents.Scan.CAMERA_ID)) {
-          int cameraId = intent.getIntExtra(Intents.Scan.CAMERA_ID, -1);
-          if (cameraId >= 0) {
-            cameraManager.setManualCameraId(cameraId);
-          }
-        }
-        
-        String customPromptMessage = intent.getStringExtra(Intents.Scan.PROMPT_MESSAGE);
-        if (customPromptMessage != null) {
-          statusView.setText(customPromptMessage);
-        }
-
-      } else if (dataString != null &&
-                 dataString.contains("http://www.google") &&
-                 dataString.contains("/m/products/scan")) {
-
-        // Scan only products and send the result to mobile Product Search.
-        source = IntentSource.PRODUCT_SEARCH_LINK;
-        sourceUrl = dataString;
-        decodeFormats = DecodeFormatManager.PRODUCT_FORMATS;
-
-      } else if (isZXingURL(dataString)) {
-
-        // Scan formats requested in query string (all formats if none specified).
-        // If a return URL is specified, send the results there. Otherwise, handle it ourselves.
-        source = IntentSource.ZXING_LINK;
-        sourceUrl = dataString;
-        Uri inputUri = Uri.parse(dataString);
-        scanFromWebPageManager = new ScanFromWebPageManager(inputUri);
-        decodeFormats = DecodeFormatManager.parseDecodeFormats(inputUri);
-        // Allow a sub-set of the hints to be specified by the caller.
-        decodeHints = DecodeHintManager.parseDecodeHints(inputUri);
-
-      }
-
-      characterSet = intent.getStringExtra(Intents.Scan.CHARACTER_SET);
-
-    }
 
     SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
     SurfaceHolder surfaceHolder = surfaceView.getHolder();
@@ -270,18 +206,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     }
   }
   
-  private static boolean isZXingURL(String dataString) {
-    if (dataString == null) {
-      return false;
-    }
-    for (String url : ZXING_URLS) {
-      if (dataString.startsWith(url)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   protected void onPause() {
     if (handler != null) {
@@ -600,7 +524,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       cameraManager.openDriver(surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (handler == null) {
-        handler = new CaptureActivityHandler(this, decodeFormats, decodeHints, characterSet, cameraManager);
+        handler = new CaptureActivityHandler(this, decodeFormats, characterSet, cameraManager);
       }
       decodeOrStoreSavedBitmap(null, null);
     } catch (IOException ioe) {

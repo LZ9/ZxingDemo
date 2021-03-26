@@ -32,11 +32,6 @@ public final class Intents {
    * Constants related to the {@link Scan#ACTION} Intent.
    */
   public static final class Scan {
-    /**
-     * Send this intent to open the Barcodes app in scanning mode, find a barcode, and return
-     * the results.
-     */
-    public static final String ACTION = "com.google.zxing.client.android.SCAN";
 
     /**
      * By default, sending this will decode all barcodes that we understand. However it

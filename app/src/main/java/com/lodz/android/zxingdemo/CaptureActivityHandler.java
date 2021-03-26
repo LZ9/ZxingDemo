@@ -31,12 +31,10 @@ import android.provider.Browser;
 import android.util.Log;
 
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
 import com.lodz.android.zxingdemo.camera.CameraManager;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * This class handles all the messaging which comprises the state machine for capture.
@@ -60,11 +58,10 @@ public final class CaptureActivityHandler extends Handler {
 
   CaptureActivityHandler(CaptureActivity activity,
                          Collection<BarcodeFormat> decodeFormats,
-                         Map<DecodeHintType,?> baseHints,
                          String characterSet,
                          CameraManager cameraManager) {
     this.activity = activity;
-    decodeThread = new DecodeThread(activity, decodeFormats, baseHints, characterSet,
+    decodeThread = new DecodeThread(activity, decodeFormats, characterSet,
         new ViewfinderResultPointCallback(activity.getViewfinderView()));
     decodeThread.start();
     state = State.SUCCESS;
