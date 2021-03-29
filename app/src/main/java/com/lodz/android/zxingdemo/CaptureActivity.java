@@ -16,7 +16,6 @@
 
 package com.lodz.android.zxingdemo;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -30,7 +29,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -40,6 +38,9 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
@@ -63,13 +64,11 @@ import java.util.Map;
  * @author dswitkin@google.com (Daniel Switkin)
  * @author Sean Owen
  */
-public final class CaptureActivity extends Activity implements SurfaceHolder.Callback {
+public final class CaptureActivity extends AppCompatActivity {
 
   private static final String TAG = CaptureActivity.class.getSimpleName();
 
   private static final long DEFAULT_INTENT_RESULT_DURATION_MS = 1500L;
-
-  private static final String[] ZXING_URLS = { "http://zxing.appspot.com/scan", "zxing://scan/" };
 
   private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
       EnumSet.of(ResultMetadataType.ISSUE_NUMBER,
@@ -181,7 +180,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       initCamera(surfaceHolder);
     } else {
       // Install the callback and wait for surfaceCreated() to init the camera.
-      surfaceHolder.addCallback(this);
+      surfaceHolder.addCallback(mCallback);
     }
   }
 
@@ -219,32 +218,23 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     if (!hasSurface) {
       SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
       SurfaceHolder surfaceHolder = surfaceView.getHolder();
-      surfaceHolder.removeCallback(this);
+      surfaceHolder.removeCallback(mCallback);
     }
     super.onPause();
   }
 
   @Override
-  public boolean onKeyDown(int keyCode, KeyEvent event) {
-    switch (keyCode) {
-      case KeyEvent.KEYCODE_BACK:
-        if (source == IntentSource.NATIVE_APP_INTENT) {
-          setResult(RESULT_CANCELED);
-          finish();
-          return true;
-        }
-        if ((source == IntentSource.NONE || source == IntentSource.ZXING_LINK) && lastResult != null) {
-          restartPreviewAfterDelay(0L);
-          return true;
-        }
-        break;
-      case KeyEvent.KEYCODE_FOCUS:
-      case KeyEvent.KEYCODE_CAMERA:
-        // Handle these events so they don't launch the Camera app
-        return true;
-
+  public void onBackPressed() {
+    if (source == IntentSource.NATIVE_APP_INTENT) {
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
     }
-    return super.onKeyDown(keyCode, event);
+    if ((source == IntentSource.NONE || source == IntentSource.ZXING_LINK) && lastResult != null) {
+      restartPreviewAfterDelay(0L);
+      return;
+    }
+    finish();
   }
 
   private void decodeOrStoreSavedBitmap(Bitmap bitmap, Result result) {
@@ -256,33 +246,35 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         savedResultToShow = result;
       }
       if (savedResultToShow != null) {
-        Message message = Message.obtain(handler, R.id.decode_succeeded, savedResultToShow);
+        Message message = Message.obtain(handler, CaptureActivityHandler.DECODE_SUCCEEDED, savedResultToShow);
         handler.sendMessage(message);
       }
       savedResultToShow = null;
     }
   }
 
-  @Override
-  public void surfaceCreated(SurfaceHolder holder) {
-    if (holder == null) {
-      Log.e(TAG, "*** WARNING *** surfaceCreated() gave us a null surface!");
+  private SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
+    @Override
+    public void surfaceCreated(@NonNull SurfaceHolder holder) {
+      if (holder == null) {
+        Log.e(TAG, "*** WARNING *** surfaceCreated() gave us a null surface!");
+      }
+      if (!hasSurface) {
+        hasSurface = true;
+        initCamera(holder);
+      }
     }
-    if (!hasSurface) {
-      hasSurface = true;
-      initCamera(holder);
+
+    @Override
+    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
     }
-  }
 
-  @Override
-  public void surfaceDestroyed(SurfaceHolder holder) {
-    hasSurface = false;
-  }
+    @Override
+    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
 
-  @Override
-  public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-    // do nothing
-  }
+    }
+  };
 
   /**
    * A valid barcode has been found, so give an indication of success and show the results.
@@ -479,7 +471,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
             }
           }
         }
-        sendReplyMessage(R.id.return_scan_result, intent, resultDurationMS);
+        sendReplyMessage(CaptureActivityHandler.RETURN_SCAN_RESULT, intent, resultDurationMS);
         break;
 
       case PRODUCT_SEARCH_LINK:
@@ -488,14 +480,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         int end = sourceUrl.lastIndexOf("/scan");
         String productReplyURL = sourceUrl.substring(0, end) + "?q=" + 
             resultHandler.getDisplayContents() + "&source=zxing";
-        sendReplyMessage(R.id.launch_product_query, productReplyURL, resultDurationMS);
+        sendReplyMessage(CaptureActivityHandler.LAUNCH_PRODUCT_QUERY, productReplyURL, resultDurationMS);
         break;
         
       case ZXING_LINK:
         if (scanFromWebPageManager != null && scanFromWebPageManager.isScanFromWebPage()) {
           String linkReplyURL = scanFromWebPageManager.buildReplyURL(rawResult, resultHandler);
           scanFromWebPageManager = null;
-          sendReplyMessage(R.id.launch_product_query, linkReplyURL, resultDurationMS);
+          sendReplyMessage(CaptureActivityHandler.LAUNCH_PRODUCT_QUERY, linkReplyURL, resultDurationMS);
         }
         break;
     }
@@ -549,7 +541,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   public void restartPreviewAfterDelay(long delayMS) {
     if (handler != null) {
-      handler.sendEmptyMessageDelayed(R.id.restart_preview, delayMS);
+      handler.sendEmptyMessageDelayed(CaptureActivityHandler.RESTART_PREVIEW, delayMS);
     }
     resetStatusView();
   }
