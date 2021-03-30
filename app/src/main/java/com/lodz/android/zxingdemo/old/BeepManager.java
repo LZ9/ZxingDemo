@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 import android.app.Activity;
 import android.content.Context;
@@ -23,6 +23,8 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Vibrator;
 import android.util.Log;
+
+import com.lodz.android.zxingdemo.R;
 
 import java.io.Closeable;
 import java.io.IOException;

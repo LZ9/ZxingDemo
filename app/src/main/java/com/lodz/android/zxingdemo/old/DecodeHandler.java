@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;

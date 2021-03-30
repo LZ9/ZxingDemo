@@ -43,7 +43,7 @@
 
 
         <activity
-            android:name=".CaptureActivity"
+            android:name=".old.CaptureActivity"
             android:clearTaskOnLaunch="true"
             android:screenOrientation="portrait"
             android:stateNotNeeded="true"

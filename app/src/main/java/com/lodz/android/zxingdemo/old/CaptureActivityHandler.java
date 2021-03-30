@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -32,7 +32,7 @@ import android.util.Log;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
-import com.lodz.android.zxingdemo.camera.CameraManager;
+import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
 

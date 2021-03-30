@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo.camera.open;
+package com.lodz.android.zxingdemo.old.camera.open;
 
 import android.hardware.Camera;
 

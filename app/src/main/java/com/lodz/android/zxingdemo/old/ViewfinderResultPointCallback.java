@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 ZXing authors
+ * Copyright (C) 2009 ZXing authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo.result;
+package com.lodz.android.zxingdemo.old;
 
 
-import com.google.zxing.client.result.ParsedResult;
-import com.lodz.android.zxingdemo.R;
+import com.google.zxing.ResultPoint;
+import com.google.zxing.ResultPointCallback;
 
-/**
- * This class handles TextParsedResult as well as unknown formats. It's the fallback handler.
- *
- * @author dswitkin@google.com (Daniel Switkin)
- */
-public final class TextResultHandler extends ResultHandler {
+final class ViewfinderResultPointCallback implements ResultPointCallback {
 
+  private final ViewfinderView viewfinderView;
 
-  public TextResultHandler(ParsedResult result) {
-    super(result);
+  ViewfinderResultPointCallback(ViewfinderView viewfinderView) {
+    this.viewfinderView = viewfinderView;
   }
 
   @Override
-  public void handleButtonPress(int index) {
+  public void foundPossibleResultPoint(ResultPoint point) {
+    viewfinderView.addPossibleResultPoint(point);
   }
 
-  @Override
-  public int getDisplayTitle() {
-    return R.string.result_text;
-  }
 }

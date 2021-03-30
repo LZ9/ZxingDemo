@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 
 import android.os.Handler;
@@ -58,13 +58,13 @@ final class DecodeThread extends Thread {
     // The prefs can't change while the thread is running, so pick them up once here.
     if (decodeFormats == null || decodeFormats.isEmpty()) {
       decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
-      decodeFormats.addAll(DecodeFormatManager.PRODUCT_FORMATS);
-      decodeFormats.addAll(DecodeFormatManager.INDUSTRIAL_FORMATS);
-      decodeFormats.addAll(DecodeFormatManager.QR_CODE_FORMATS);
-      decodeFormats.addAll(DecodeFormatManager.DATA_MATRIX_FORMATS);
+      decodeFormats.addAll(DecodeFormatManager.QR_CODE_FORMATS);//二维码
+      decodeFormats.addAll(DecodeFormatManager.INDUSTRIAL_FORMATS);// 条形码，需要横屏识别
 
       boolean isDefaultAdd = false;
       if (isDefaultAdd){
+        decodeFormats.addAll(DecodeFormatManager.PRODUCT_FORMATS);
+        decodeFormats.addAll(DecodeFormatManager.DATA_MATRIX_FORMATS);
         decodeFormats.addAll(DecodeFormatManager.AZTEC_FORMATS);
         decodeFormats.addAll(DecodeFormatManager.PDF417_FORMATS);
       }

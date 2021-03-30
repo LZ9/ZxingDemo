@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 
 import android.annotation.SuppressLint;
@@ -28,7 +28,8 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.google.zxing.ResultPoint;
-import com.lodz.android.zxingdemo.camera.CameraManager;
+import com.lodz.android.zxingdemo.R;
+import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.ArrayList;
 import java.util.List;

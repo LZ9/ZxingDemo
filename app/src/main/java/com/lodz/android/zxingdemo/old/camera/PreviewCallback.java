@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo.camera;
+package com.lodz.android.zxingdemo.old.camera;
 
 import android.graphics.Point;
 import android.hardware.Camera;

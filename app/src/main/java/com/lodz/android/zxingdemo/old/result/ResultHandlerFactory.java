@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo.result;
+package com.lodz.android.zxingdemo.old.result;
 
 
 import com.google.zxing.Result;
 import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.anko.AnkoToastKt;
-import com.lodz.android.zxingdemo.CaptureActivity;
+import com.lodz.android.zxingdemo.old.CaptureActivity;
 
 /**
  * Manufactures Android-specific handlers based on the barcode content's type.

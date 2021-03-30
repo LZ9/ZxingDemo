@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo.camera;
+package com.lodz.android.zxingdemo.old.camera;
 
 import android.content.Context;
 import android.graphics.Point;
@@ -25,7 +25,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
-import com.lodz.android.zxingdemo.camera.open.OpenCamera;
+import com.lodz.android.zxingdemo.old.camera.open.OpenCamera;
 
 
 /**

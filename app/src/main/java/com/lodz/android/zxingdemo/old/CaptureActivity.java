@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -46,9 +45,10 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
 import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
-import com.lodz.android.zxingdemo.camera.CameraManager;
-import com.lodz.android.zxingdemo.result.ResultHandler;
-import com.lodz.android.zxingdemo.result.ResultHandlerFactory;
+import com.lodz.android.zxingdemo.R;
+import com.lodz.android.zxingdemo.old.camera.CameraManager;
+import com.lodz.android.zxingdemo.old.result.ResultHandler;
+import com.lodz.android.zxingdemo.old.result.ResultHandlerFactory;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -84,16 +84,10 @@ public final class CaptureActivity extends AppCompatActivity {
   private View resultView;
   private Result lastResult;
   private boolean hasSurface;
-  private IntentSource source;
-  private String sourceUrl;
-  private ScanFromWebPageManager scanFromWebPageManager;
   private Collection<BarcodeFormat> decodeFormats;
   private String characterSet;
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
-
-  private Button mFlashBtn;
-
 
   ViewfinderView getViewfinderView() {
     return viewfinderView;
@@ -113,14 +107,14 @@ public final class CaptureActivity extends AppCompatActivity {
 
     Window window = getWindow();
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    setContentView(R.layout.capture);
+    setContentView(R.layout.activity_capture);
 
     hasSurface = false;
     beepManager = new BeepManager(this);
     ambientLightManager = new AmbientLightManager(this);
 
-    mFlashBtn = findViewById(R.id.flash_btn);
-    mFlashBtn.setOnClickListener(new View.OnClickListener() {
+    Button flashBtn = findViewById(R.id.flash_btn);
+    flashBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         cameraManager.setTorch(!cameraManager.getTorchState());
@@ -166,9 +160,6 @@ public final class CaptureActivity extends AppCompatActivity {
     ambientLightManager.start(cameraManager);
 
 
-    source = IntentSource.NONE;
-    sourceUrl = null;
-    scanFromWebPageManager = null;
     decodeFormats = null;
     characterSet = null;
 
@@ -225,12 +216,7 @@ public final class CaptureActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-    if (source == IntentSource.NATIVE_APP_INTENT) {
-      setResult(RESULT_CANCELED);
-      finish();
-      return;
-    }
-    if ((source == IntentSource.NONE || source == IntentSource.ZXING_LINK) && lastResult != null) {
+    if (lastResult != null) {
       restartPreviewAfterDelay(0L);
       return;
     }
@@ -293,23 +279,7 @@ public final class CaptureActivity extends AppCompatActivity {
       beepManager.playBeepSoundAndVibrate();
       drawResultPoints(barcode, scaleFactor, rawResult);
     }
-
-    switch (source) {
-      case NATIVE_APP_INTENT:
-      case PRODUCT_SEARCH_LINK:
-        handleDecodeExternally(rawResult, resultHandler, barcode);
-        break;
-      case ZXING_LINK:
-        if (scanFromWebPageManager == null || !scanFromWebPageManager.isScanFromWebPage()) {
-          handleDecodeInternally(rawResult, resultHandler, barcode);
-        } else {
-          handleDecodeExternally(rawResult, resultHandler, barcode);
-        }
-        break;
-      case NONE:
-        handleDecodeInternally(rawResult, resultHandler, barcode);
-        break;
-    }
+    handleDecodeInternally(rawResult, resultHandler, barcode);
   }
 
   /**
@@ -433,63 +403,6 @@ public final class CaptureActivity extends AppCompatActivity {
         rawResultString = rawResultString.substring(0, 32) + " ...";
       }
       statusView.setText(getString(resultHandler.getDisplayTitle()) + " : " + rawResultString);
-    }
-
-    switch (source) {
-      case NATIVE_APP_INTENT:
-        // Hand back whatever action they requested - this can be changed to Intents.Scan.ACTION when
-        // the deprecated intent is retired.
-        Intent intent = new Intent(getIntent().getAction());
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.putExtra(Intents.Scan.RESULT, rawResult.toString());
-        intent.putExtra(Intents.Scan.RESULT_FORMAT, rawResult.getBarcodeFormat().toString());
-        byte[] rawBytes = rawResult.getRawBytes();
-        if (rawBytes != null && rawBytes.length > 0) {
-          intent.putExtra(Intents.Scan.RESULT_BYTES, rawBytes);
-        }
-        Map<ResultMetadataType, ?> metadata = rawResult.getResultMetadata();
-        if (metadata != null) {
-          if (metadata.containsKey(ResultMetadataType.UPC_EAN_EXTENSION)) {
-            intent.putExtra(Intents.Scan.RESULT_UPC_EAN_EXTENSION,
-                metadata.get(ResultMetadataType.UPC_EAN_EXTENSION).toString());
-          }
-          Number orientation = (Number) metadata.get(ResultMetadataType.ORIENTATION);
-          if (orientation != null) {
-            intent.putExtra(Intents.Scan.RESULT_ORIENTATION, orientation.intValue());
-          }
-          String ecLevel = (String) metadata.get(ResultMetadataType.ERROR_CORRECTION_LEVEL);
-          if (ecLevel != null) {
-            intent.putExtra(Intents.Scan.RESULT_ERROR_CORRECTION_LEVEL, ecLevel);
-          }
-          @SuppressWarnings("unchecked")
-          Iterable<byte[]> byteSegments = (Iterable<byte[]>) metadata.get(ResultMetadataType.BYTE_SEGMENTS);
-          if (byteSegments != null) {
-            int i = 0;
-            for (byte[] byteSegment : byteSegments) {
-              intent.putExtra(Intents.Scan.RESULT_BYTE_SEGMENTS_PREFIX + i, byteSegment);
-              i++;
-            }
-          }
-        }
-        sendReplyMessage(CaptureActivityHandler.RETURN_SCAN_RESULT, intent, resultDurationMS);
-        break;
-
-      case PRODUCT_SEARCH_LINK:
-        // Reformulate the URL which triggered us into a query, so that the request goes to the same
-        // TLD as the scan URL.
-        int end = sourceUrl.lastIndexOf("/scan");
-        String productReplyURL = sourceUrl.substring(0, end) + "?q=" + 
-            resultHandler.getDisplayContents() + "&source=zxing";
-        sendReplyMessage(CaptureActivityHandler.LAUNCH_PRODUCT_QUERY, productReplyURL, resultDurationMS);
-        break;
-        
-      case ZXING_LINK:
-        if (scanFromWebPageManager != null && scanFromWebPageManager.isScanFromWebPage()) {
-          String linkReplyURL = scanFromWebPageManager.buildReplyURL(rawResult, resultHandler);
-          scanFromWebPageManager = null;
-          sendReplyMessage(CaptureActivityHandler.LAUNCH_PRODUCT_QUERY, linkReplyURL, resultDurationMS);
-        }
-        break;
     }
   }
 

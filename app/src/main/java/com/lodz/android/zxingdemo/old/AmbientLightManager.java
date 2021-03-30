@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lodz.android.zxingdemo;
+package com.lodz.android.zxingdemo.old;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -22,7 +22,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-import com.lodz.android.zxingdemo.camera.CameraManager;
+import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 /**
  * Detects ambient light and switches on the front light when very dark, and off again when sufficiently light.
