@@ -4,11 +4,11 @@
     <string name="menu_settings">设置</string>
     <string name="menu_flash">闪光灯</string>
     <string name="msg_camera_framework_bug">很遗憾，Android 相机出现问题。你可能需要重启设备。</string>
-    <string name="msg_default_format">格式</string>
-    <string name="msg_default_meta">元数据</string>
+    <string name="msg_default_format">格式：</string>
+    <string name="msg_default_meta">元数据：</string>
     <string name="msg_default_status">请将条码置于取景框内扫描。  </string>
-    <string name="msg_default_time">时间</string>
-    <string name="msg_default_type">类型</string>
+    <string name="msg_default_time">时间：</string>
+    <string name="msg_default_type">类型：</string>
     <string name="msg_error">错误</string>
     <string name="msg_invalid_value">值无效</string>
     <string name="result_text">找到纯文本</string>

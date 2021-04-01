@@ -17,17 +17,17 @@
 package com.lodz.android.zxingdemo.old;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -35,7 +35,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -45,14 +44,17 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
 import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
+import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
+import com.lodz.android.zxingdemo.main.ResultBean;
+import com.lodz.android.zxingdemo.main.ResultDialog;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 import com.lodz.android.zxingdemo.old.result.ResultHandler;
 import com.lodz.android.zxingdemo.old.result.ResultHandlerFactory;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -81,7 +83,6 @@ public final class CaptureActivity extends AppCompatActivity {
   private Result savedResultToShow;
   private ViewfinderView viewfinderView;
   private TextView statusView;
-  private View resultView;
   private Result lastResult;
   private boolean hasSurface;
   private Collection<BarcodeFormat> decodeFormats;
@@ -138,7 +139,6 @@ public final class CaptureActivity extends AppCompatActivity {
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     viewfinderView.setCameraManager(cameraManager);
 
-    resultView = findViewById(R.id.result_view);
     statusView = (TextView) findViewById(R.id.status_view);
 
     handler = null;
@@ -330,31 +330,13 @@ public final class CaptureActivity extends AppCompatActivity {
 
     statusView.setVisibility(View.GONE);
     viewfinderView.setVisibility(View.GONE);
-    resultView.setVisibility(View.VISIBLE);
 
-    ImageView barcodeImageView = (ImageView) findViewById(R.id.barcode_image_view);
-    if (barcode == null) {
-      barcodeImageView.setImageBitmap(BitmapFactory.decodeResource(getResources(),
-          R.mipmap.ic_launcher));
-    } else {
-      barcodeImageView.setImageBitmap(barcode);
-    }
+    ResultBean bean = new ResultBean();
+    bean.setBarcodeImg(barcode);
+    bean.setFormat(rawResult.getBarcodeFormat().toString());
+    bean.setType(resultHandler.getType().toString());
+    bean.setTime(DateUtils.getFormatString(DateUtils.TYPE_2, new Date(rawResult.getTimestamp())));
 
-    TextView formatTextView = (TextView) findViewById(R.id.format_text_view);
-    formatTextView.setText(rawResult.getBarcodeFormat().toString());
-
-    TextView typeTextView = (TextView) findViewById(R.id.type_text_view);
-    typeTextView.setText(resultHandler.getType().toString());
-
-    DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-    TextView timeTextView = (TextView) findViewById(R.id.time_text_view);
-    timeTextView.setText(formatter.format(rawResult.getTimestamp()));
-
-
-    TextView metaTextView = (TextView) findViewById(R.id.meta_text_view);
-    View metaTextViewLabel = findViewById(R.id.meta_text_view_label);
-    metaTextView.setVisibility(View.GONE);
-    metaTextViewLabel.setVisibility(View.GONE);
     Map<ResultMetadataType,Object> metadata = rawResult.getResultMetadata();
     if (metadata != null) {
       StringBuilder metadataText = new StringBuilder(20);
@@ -365,21 +347,25 @@ public final class CaptureActivity extends AppCompatActivity {
       }
       if (metadataText.length() > 0) {
         metadataText.setLength(metadataText.length() - 1);
-        metaTextView.setText(metadataText);
-        metaTextView.setVisibility(View.VISIBLE);
-        metaTextViewLabel.setVisibility(View.VISIBLE);
+        bean.setMeta(metadataText.toString());
       }
     }
+    bean.setContents(resultHandler.getDisplayContents().toString());
+    showResultDialog(CaptureActivity.this, bean);
+  }
 
-    CharSequence displayContents = resultHandler.getDisplayContents();
-    TextView contentsTextView = (TextView) findViewById(R.id.contents_text_view);
-    contentsTextView.setText(displayContents);
-    int scaledSize = Math.max(22, 32 - displayContents.length() / 4);
-    contentsTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
-
-    TextView supplementTextView = (TextView) findViewById(R.id.contents_supplement_text_view);
-    supplementTextView.setText("");
-    supplementTextView.setOnClickListener(null);
+  private void showResultDialog(Context context, ResultBean bean){
+    ResultDialog dialog = new ResultDialog(context);
+    dialog.setData(bean);
+    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+      @Override
+      public void onCancel(DialogInterface dialog) {
+        if (lastResult != null) {
+          restartPreviewAfterDelay(0L);
+        }
+      }
+    });
+    dialog.show();
   }
 
   // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.
@@ -460,7 +446,6 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   private void resetStatusView() {
-    resultView.setVisibility(View.GONE);
     statusView.setText(R.string.msg_default_status);
     statusView.setVisibility(View.VISIBLE);
     viewfinderView.setVisibility(View.VISIBLE);
