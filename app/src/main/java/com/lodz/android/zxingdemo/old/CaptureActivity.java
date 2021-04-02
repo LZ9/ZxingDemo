@@ -79,7 +79,6 @@ public final class CaptureActivity extends AppCompatActivity {
   private CaptureActivityHandler handler;
   private Result savedResultToShow;
   private ViewfinderView viewfinderView;
-  private Result lastResult;
   private Collection<BarcodeFormat> decodeFormats;
   private String characterSet;
   private BeepManager beepManager;
@@ -131,7 +130,6 @@ public final class CaptureActivity extends AppCompatActivity {
     viewfinderView.setCameraManager(cameraManager);
 
     handler = null;
-    lastResult = null;
 
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
@@ -194,10 +192,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-    if (lastResult != null) {
-      restartPreviewAfterDelay(0L);
-      return;
-    }
     finish();
   }
 
@@ -240,7 +234,6 @@ public final class CaptureActivity extends AppCompatActivity {
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
   public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
-    lastResult = rawResult;
     ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(this, rawResult);
 
     boolean fromLiveScan = barcode != null;
@@ -329,9 +322,7 @@ public final class CaptureActivity extends AppCompatActivity {
     dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
       @Override
       public void onCancel(DialogInterface dialog) {
-        if (lastResult != null) {
-          restartPreviewAfterDelay(0L);
-        }
+        restartPreviewAfterDelay(0L);
       }
     });
     dialog.show();
@@ -381,7 +372,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
   private void resetStatusView() {
     viewfinderView.setVisibility(View.VISIBLE);
-    lastResult = null;
   }
 
   public void drawViewfinder() {
