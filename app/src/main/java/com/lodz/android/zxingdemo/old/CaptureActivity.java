@@ -51,7 +51,6 @@ import com.lodz.android.zxingdemo.old.camera.CameraManager;
 import com.lodz.android.zxingdemo.old.result.ResultHandler;
 import com.lodz.android.zxingdemo.old.result.ResultHandlerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -343,23 +342,30 @@ public final class CaptureActivity extends AppCompatActivity {
         handler = new CaptureActivityHandler(this, decodeFormats, characterSet, cameraManager);
       }
       decodeOrStoreSavedBitmap(null);
-    } catch (IOException ioe) {
+    } catch (Exception ioe) {
       Log.w(TAG, ioe);
-      displayFrameworkBugMessageAndExit();
-    } catch (RuntimeException e) {
-      // Barcode Scanner has seen crashes in the wild of this variety:
-      // java.?lang.?RuntimeException: Fail to connect to camera service
-      Log.w(TAG, "Unexpected error initializing camera", e);
-      displayFrameworkBugMessageAndExit();
+      showCameraExceptionDialog();
     }
   }
 
-  private void displayFrameworkBugMessageAndExit() {
+  private void showCameraExceptionDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle(getString(R.string.app_name));
     builder.setMessage(getString(R.string.msg_camera_framework_bug));
-    builder.setPositiveButton(R.string.button_ok, new FinishListener(this));
-    builder.setOnCancelListener(new FinishListener(this));
+    builder.setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.dismiss();
+        finish();
+      }
+    });
+    builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+      @Override
+      public void onCancel(DialogInterface dialog) {
+        dialog.dismiss();
+        finish();
+      }
+    });
     builder.show();
   }
 
