@@ -17,18 +17,12 @@
 package com.lodz.android.zxingdemo.old;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Browser;
-import android.util.Log;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
@@ -48,7 +42,6 @@ public final class CaptureActivityHandler extends Handler {
   public static final int RESTART_PREVIEW = 100;
   public static final int RETURN_SCAN_RESULT = 101;
   public static final int QUIT = 102;
-  public static final int LAUNCH_PRODUCT_QUERY = 103;
   public static final int DECODE_SUCCEEDED = 104;
   public static final int DECODE_FAILED = 105;
   public static final int DECODE = 106;
@@ -113,38 +106,6 @@ public final class CaptureActivityHandler extends Handler {
       case CaptureActivityHandler.RETURN_SCAN_RESULT:
         activity.setResult(Activity.RESULT_OK, (Intent) message.obj);
         activity.finish();
-        break;
-      case CaptureActivityHandler.LAUNCH_PRODUCT_QUERY:
-        String url = (String) message.obj;
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intents.FLAG_NEW_DOC);
-        intent.setData(Uri.parse(url));
-
-        ResolveInfo resolveInfo =
-            activity.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        String browserPackageName = null;
-        if (resolveInfo != null && resolveInfo.activityInfo != null) {
-          browserPackageName = resolveInfo.activityInfo.packageName;
-        }
-
-        // Needed for default Android browser / Chrome only apparently
-        if (browserPackageName != null) {
-          switch (browserPackageName) {
-            case "com.android.browser":
-            case "com.android.chrome":
-              intent.setPackage(browserPackageName);
-              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-              intent.putExtra(Browser.EXTRA_APPLICATION_ID, browserPackageName);
-              break;
-          }
-        }
-
-        try {
-          activity.startActivity(intent);
-        } catch (ActivityNotFoundException ignored) {
-          Log.w(TAG, "Can't find anything to handle VIEW of URI");
-        }
         break;
     }
   }

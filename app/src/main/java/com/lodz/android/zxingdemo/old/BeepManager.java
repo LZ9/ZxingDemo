@@ -26,13 +26,8 @@ import android.util.Log;
 
 import com.lodz.android.zxingdemo.R;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-/**
- * Manages beeps and vibrations for {@link CaptureActivity}.
- */
-final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
+/** 提示音管理类 */
+final class BeepManager {
 
   private static final String TAG = BeepManager.class.getSimpleName();
 
@@ -44,10 +39,19 @@ final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
   private boolean playBeep;
   private boolean vibrate;
 
-  BeepManager(Activity activity) {
+
+  public BeepManager(Activity activity) {
     this.activity = activity;
     this.mediaPlayer = null;
     updatePrefs();
+  }
+
+  public void setPlayBeep(boolean playBeep) {
+    this.playBeep = playBeep;
+  }
+
+  public void setVibrate(boolean vibrate) {
+    this.vibrate = vibrate;
   }
 
   synchronized void updatePrefs() {
@@ -57,7 +61,7 @@ final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
       // The volume on STREAM_SYSTEM is not adjustable, and users found it too loud,
       // so we now play on the music stream.
       activity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
-      mediaPlayer = buildMediaPlayer(activity);
+      mediaPlayer = buildMediaPlayer();
     }
   }
 
@@ -83,38 +87,37 @@ final class BeepManager implements MediaPlayer.OnErrorListener, Closeable {
     return shouldPlayBeep;
   }
 
-  private MediaPlayer buildMediaPlayer(Context activity) {
+  private MediaPlayer buildMediaPlayer() {
     MediaPlayer mediaPlayer = new MediaPlayer();
     try (AssetFileDescriptor file = activity.getResources().openRawResourceFd(R.raw.beep)) {
       mediaPlayer.setDataSource(file.getFileDescriptor(), file.getStartOffset(), file.getLength());
-      mediaPlayer.setOnErrorListener(this);
+      mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+        @Override
+        public boolean onError(MediaPlayer mp, int what, int extra) {
+          if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+            // we are finished, so put up an appropriate error toast if required and finish
+            activity.finish();
+          } else {
+            // possibly media player error, so release and recreate
+            close();
+            updatePrefs();
+          }
+          return true;
+        }
+      });
       mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
       mediaPlayer.setLooping(false);
       mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
       mediaPlayer.prepare();
       return mediaPlayer;
-    } catch (IOException ioe) {
+    } catch (Exception ioe) {
       Log.w(TAG, ioe);
       mediaPlayer.release();
       return null;
     }
   }
 
-  @Override
-  public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
-    if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
-      // we are finished, so put up an appropriate error toast if required and finish
-      activity.finish();
-    } else {
-      // possibly media player error, so release and recreate
-      close();
-      updatePrefs();
-    }
-    return true;
-  }
-
-  @Override
-  public synchronized void close() {
+  public void close() {
     if (mediaPlayer != null) {
       mediaPlayer.release();
       mediaPlayer = null;
