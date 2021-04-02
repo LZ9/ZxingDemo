@@ -80,11 +80,12 @@ public final class CaptureActivity extends AppCompatActivity {
   private Result savedResultToShow;
   private ViewfinderView viewfinderView;
   private Result lastResult;
-  private boolean hasSurface;
   private Collection<BarcodeFormat> decodeFormats;
   private String characterSet;
   private BeepManager beepManager;
   private AmbientLightManager ambientLightManager;
+
+  private SurfaceView mSurfaceView;
 
   ViewfinderView getViewfinderView() {
     return viewfinderView;
@@ -106,7 +107,6 @@ public final class CaptureActivity extends AppCompatActivity {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.activity_capture);
 
-    hasSurface = false;
     beepManager = new BeepManager(this);
     ambientLightManager = new AmbientLightManager(this);
 
@@ -152,16 +152,8 @@ public final class CaptureActivity extends AppCompatActivity {
     decodeFormats = null;
     characterSet = null;
 
-    SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
-    SurfaceHolder surfaceHolder = surfaceView.getHolder();
-    if (hasSurface) {
-      // The activity was paused but not stopped, so the surface still exists. Therefore
-      // surfaceCreated() won't be called, so init the camera here.
-      initCamera(surfaceHolder);
-    } else {
-      // Install the callback and wait for surfaceCreated() to init the camera.
-      surfaceHolder.addCallback(mCallback);
-    }
+    mSurfaceView = (SurfaceView) findViewById(R.id.preview_view);
+    mSurfaceView.getHolder().addCallback(mCallback);
   }
 
 
@@ -196,11 +188,7 @@ public final class CaptureActivity extends AppCompatActivity {
     beepManager.close();
     cameraManager.closeDriver();
     //historyManager = null; // Keep for onActivityResult
-    if (!hasSurface) {
-      SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
-      SurfaceHolder surfaceHolder = surfaceView.getHolder();
-      surfaceHolder.removeCallback(mCallback);
-    }
+    mSurfaceView.getHolder().removeCallback(mCallback);
     super.finish();
   }
 
@@ -213,7 +201,7 @@ public final class CaptureActivity extends AppCompatActivity {
     finish();
   }
 
-  private void decodeOrStoreSavedBitmap(Bitmap bitmap, Result result) {
+  private void decodeOrStoreSavedBitmap(Result result) {
     // Bitmap isn't used yet -- will be used soon
     if (handler == null) {
       savedResultToShow = result;
@@ -232,23 +220,15 @@ public final class CaptureActivity extends AppCompatActivity {
   private SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-      if (holder == null) {
-        Log.e(TAG, "*** WARNING *** surfaceCreated() gave us a null surface!");
-      }
-      if (!hasSurface) {
-        hasSurface = true;
-        initCamera(holder);
-      }
+      initCamera(holder);
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-
     }
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-
     }
   };
 
@@ -361,17 +341,17 @@ public final class CaptureActivity extends AppCompatActivity {
     if (surfaceHolder == null) {
       throw new IllegalStateException("No SurfaceHolder provided");
     }
-    if (cameraManager.isOpen()) {
-      Log.w(TAG, "initCamera() while already open -- late SurfaceView callback?");
-      return;
-    }
+//    if (cameraManager.isOpen()) {
+//      Log.w(TAG, "initCamera() while already open -- late SurfaceView callback?");
+//      return;
+//    }
     try {
       cameraManager.openDriver(surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (handler == null) {
         handler = new CaptureActivityHandler(this, decodeFormats, characterSet, cameraManager);
       }
-      decodeOrStoreSavedBitmap(null, null);
+      decodeOrStoreSavedBitmap(null);
     } catch (IOException ioe) {
       Log.w(TAG, ioe);
       displayFrameworkBugMessageAndExit();
