@@ -35,7 +35,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -70,8 +69,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
   private static final String TAG = CaptureActivity.class.getSimpleName();
 
-  private static final long DEFAULT_INTENT_RESULT_DURATION_MS = 1500L;
-
   private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
       EnumSet.of(ResultMetadataType.ISSUE_NUMBER,
                  ResultMetadataType.SUGGESTED_PRICE,
@@ -82,7 +79,6 @@ public final class CaptureActivity extends AppCompatActivity {
   private CaptureActivityHandler handler;
   private Result savedResultToShow;
   private ViewfinderView viewfinderView;
-  private TextView statusView;
   private Result lastResult;
   private boolean hasSurface;
   private Collection<BarcodeFormat> decodeFormats;
@@ -122,12 +118,7 @@ public final class CaptureActivity extends AppCompatActivity {
       }
     });
 
-  }
 
-  @Override
-  protected void onResume() {
-    super.onResume();
-    
     // historyManager must be initialized here to update the history preference
 
     // CameraManager must be initialized here, not in onCreate(). This is necessary because we don't
@@ -139,15 +130,13 @@ public final class CaptureActivity extends AppCompatActivity {
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     viewfinderView.setCameraManager(cameraManager);
 
-    statusView = (TextView) findViewById(R.id.status_view);
-
     handler = null;
     lastResult = null;
 
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
 //    if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_AUTO_ORIENTATION, true)) {
-      setRequestedOrientation(getCurrentOrientation());// 不使用自动旋转
+    setRequestedOrientation(getCurrentOrientation());// 不使用自动旋转
 //    } else {
 //      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
 //    }
@@ -175,6 +164,7 @@ public final class CaptureActivity extends AppCompatActivity {
     }
   }
 
+
   private int getCurrentOrientation() {
     int rotation = getWindowManager().getDefaultDisplay().getRotation();
     if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -195,9 +185,9 @@ public final class CaptureActivity extends AppCompatActivity {
       }
     }
   }
-  
+
   @Override
-  protected void onPause() {
+  public void finish() {
     if (handler != null) {
       handler.quitSynchronously();
       handler = null;
@@ -211,7 +201,7 @@ public final class CaptureActivity extends AppCompatActivity {
       SurfaceHolder surfaceHolder = surfaceView.getHolder();
       surfaceHolder.removeCallback(mCallback);
     }
-    super.onPause();
+    super.finish();
   }
 
   @Override
@@ -328,7 +318,6 @@ public final class CaptureActivity extends AppCompatActivity {
   // Put up our own UI for how to handle the decoded contents.
   private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
 
-    statusView.setVisibility(View.GONE);
     viewfinderView.setVisibility(View.GONE);
 
     ResultBean bean = new ResultBean();
@@ -366,41 +355,6 @@ public final class CaptureActivity extends AppCompatActivity {
       }
     });
     dialog.show();
-  }
-
-  // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.
-  private void handleDecodeExternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
-
-    if (barcode != null) {
-      viewfinderView.drawResultBitmap(barcode);
-    }
-
-    long resultDurationMS;
-    if (getIntent() == null) {
-      resultDurationMS = DEFAULT_INTENT_RESULT_DURATION_MS;
-    } else {
-      resultDurationMS = getIntent().getLongExtra(Intents.Scan.RESULT_DISPLAY_DURATION_MS,
-                                                  DEFAULT_INTENT_RESULT_DURATION_MS);
-    }
-
-    if (resultDurationMS > 0) {
-      String rawResultString = String.valueOf(rawResult);
-      if (rawResultString.length() > 32) {
-        rawResultString = rawResultString.substring(0, 32) + " ...";
-      }
-      statusView.setText(getString(resultHandler.getDisplayTitle()) + " : " + rawResultString);
-    }
-  }
-
-  private void sendReplyMessage(int id, Object arg, long delayMS) {
-    if (handler != null) {
-      Message message = Message.obtain(handler, id, arg);
-      if (delayMS > 0L) {
-        handler.sendMessageDelayed(message, delayMS);
-      } else {
-        handler.sendMessage(message);
-      }
-    }
   }
 
   private void initCamera(SurfaceHolder surfaceHolder) {
@@ -446,8 +400,6 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   private void resetStatusView() {
-    statusView.setText(R.string.msg_default_status);
-    statusView.setVisibility(View.VISIBLE);
     viewfinderView.setVisibility(View.VISIBLE);
     lastResult = null;
   }
