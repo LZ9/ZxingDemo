@@ -42,6 +42,7 @@ import java.util.List;
  */
 public final class ViewfinderView extends View {
 
+  // 扫描红线的透明度显隐
   private static final int[] SCANNER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
   private static final long ANIMATION_DELAY = 80L;
   private static final int CURRENT_POINT_OPACITY = 0xA0;
@@ -123,6 +124,7 @@ public final class ViewfinderView extends View {
       if (currentPossible.isEmpty()) {
         lastPossibleResultPoints = null;
       } else {
+        // 画识别圆点
         possibleResultPoints = new ArrayList<>(5);
         lastPossibleResultPoints = currentPossible;
         paint.setAlpha(CURRENT_POINT_OPACITY);
@@ -136,6 +138,7 @@ public final class ViewfinderView extends View {
         }
       }
       if (currentLast != null) {
+        // 画识别圆点
         paint.setAlpha(CURRENT_POINT_OPACITY / 2);
         paint.setColor(resultPointColor);
         synchronized (currentLast) {
