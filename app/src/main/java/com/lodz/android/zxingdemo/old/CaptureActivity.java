@@ -47,6 +47,7 @@ import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
 import com.lodz.android.zxingdemo.main.ResultBean;
 import com.lodz.android.zxingdemo.main.ResultDialog;
+import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 import com.lodz.android.zxingdemo.old.result.ResultHandler;
 import com.lodz.android.zxingdemo.old.result.ResultHandlerFactory;
@@ -104,7 +105,7 @@ public final class CaptureActivity extends AppCompatActivity {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.activity_capture);
 
-    beepManager = new BeepManager(this);
+    beepManager = new BeepManager(this, true);
 
     Button flashBtn = findViewById(R.id.flash_btn);
     flashBtn.setOnClickListener(new View.OnClickListener() {
@@ -139,8 +140,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
     resetStatusView();
 
-
-    beepManager.updatePrefs();
 
 
     decodeFormats = null;
@@ -234,7 +233,7 @@ public final class CaptureActivity extends AppCompatActivity {
     boolean fromLiveScan = barcode != null;
     if (fromLiveScan) {
       // Then not from history, so beep/vibrate and we have an image to draw on
-      beepManager.playBeepSoundAndVibrate();
+      beepManager.play();
       drawResultPoints(barcode, scaleFactor, rawResult);
     }
     handleDecodeInternally(rawResult, resultHandler, barcode);
