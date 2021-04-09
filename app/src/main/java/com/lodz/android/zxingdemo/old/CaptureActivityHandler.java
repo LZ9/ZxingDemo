@@ -26,6 +26,8 @@ import android.os.Message;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
+import com.google.zxing.ResultPoint;
+import com.google.zxing.ResultPointCallback;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
@@ -65,8 +67,12 @@ public final class CaptureActivityHandler extends Handler {
                          String characterSet,
                          CameraManager cameraManager) {
     this.activity = activity;
-    decodeThread = new DecodeThread(activity, decodeFormats, characterSet,
-        new ViewfinderResultPointCallback(activity.getViewfinderView()));
+    decodeThread = new DecodeThread(activity, decodeFormats, characterSet, new ResultPointCallback() {
+      @Override
+      public void foundPossibleResultPoint(ResultPoint point) {
+        activity.getViewfinderView().addPossibleResultPoint(point);
+      }
+    });
     decodeThread.start();
     state = State.SUCCESS;
 
