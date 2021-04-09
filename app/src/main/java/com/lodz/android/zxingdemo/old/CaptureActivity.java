@@ -43,14 +43,14 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
 import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
+import com.google.zxing.client.result.ParsedResult;
+import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
 import com.lodz.android.zxingdemo.main.ResultBean;
 import com.lodz.android.zxingdemo.main.ResultDialog;
 import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
-import com.lodz.android.zxingdemo.old.result.ResultHandler;
-import com.lodz.android.zxingdemo.old.result.ResultHandlerFactory;
 
 import java.util.Collection;
 import java.util.Date;
@@ -228,7 +228,7 @@ public final class CaptureActivity extends AppCompatActivity {
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
   public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
-    ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(this, rawResult);
+    ParsedResult result = ResultParser.parseResult(rawResult);
 
     boolean fromLiveScan = barcode != null;
     if (fromLiveScan) {
@@ -236,7 +236,7 @@ public final class CaptureActivity extends AppCompatActivity {
       beepManager.play();
       drawResultPoints(barcode, scaleFactor, rawResult);
     }
-    handleDecodeInternally(rawResult, resultHandler, barcode);
+    handleDecodeInternally(rawResult, result, barcode);
   }
 
   /**
@@ -283,14 +283,14 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   // Put up our own UI for how to handle the decoded contents.
-  private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
+  private void handleDecodeInternally(Result rawResult, ParsedResult result, Bitmap barcode) {
 
     viewfinderView.setVisibility(View.GONE);
 
     ResultBean bean = new ResultBean();
     bean.setBarcodeImg(barcode);
     bean.setFormat(rawResult.getBarcodeFormat().toString());
-    bean.setType(resultHandler.getType().toString());
+    bean.setType(result.getType().toString());
     bean.setTime(DateUtils.getFormatString(DateUtils.TYPE_2, new Date(rawResult.getTimestamp())));
 
     Map<ResultMetadataType,Object> metadata = rawResult.getResultMetadata();
@@ -306,7 +306,7 @@ public final class CaptureActivity extends AppCompatActivity {
         bean.setMeta(metadataText.toString());
       }
     }
-    bean.setContents(resultHandler.getDisplayContents().toString());
+    bean.setContents(result.getDisplayResult());
     showResultDialog(CaptureActivity.this, bean);
   }
 
