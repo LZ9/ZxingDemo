@@ -81,7 +81,6 @@ public final class CaptureActivity extends AppCompatActivity {
   private Collection<BarcodeFormat> decodeFormats;
   private String characterSet;
   private BeepManager beepManager;
-  private AmbientLightManager ambientLightManager;
 
   private SurfaceView mSurfaceView;
 
@@ -106,7 +105,6 @@ public final class CaptureActivity extends AppCompatActivity {
     setContentView(R.layout.activity_capture);
 
     beepManager = new BeepManager(this);
-    ambientLightManager = new AmbientLightManager(this);
 
     Button flashBtn = findViewById(R.id.flash_btn);
     flashBtn.setOnClickListener(new View.OnClickListener() {
@@ -143,7 +141,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
 
     beepManager.updatePrefs();
-    ambientLightManager.start(cameraManager);
 
 
     decodeFormats = null;
@@ -181,7 +178,6 @@ public final class CaptureActivity extends AppCompatActivity {
       handler.quitSynchronously();
       handler = null;
     }
-    ambientLightManager.stop();
     beepManager.close();
     cameraManager.closeDriver();
     //historyManager = null; // Keep for onActivityResult
