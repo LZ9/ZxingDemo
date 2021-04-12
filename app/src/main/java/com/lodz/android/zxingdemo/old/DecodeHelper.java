@@ -18,9 +18,7 @@ package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -34,7 +32,7 @@ import com.lodz.android.zxingdemo.old.camera.CameraManager;
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
-final class DecodeHandler extends Handler {
+public final class DecodeHelper {
 
   private final MultiFormatReader multiFormatReader;
   private boolean running = true;
@@ -43,27 +41,16 @@ final class DecodeHandler extends Handler {
 
   private CameraManager mCameraManager;
 
-  DecodeHandler(CaptureActivityHelper helper, Map<DecodeHintType,Object> hints, CameraManager manager) {
+  public DecodeHelper(CaptureActivityHelper helper, Map<DecodeHintType,Object> hints, CameraManager manager) {
     multiFormatReader = new MultiFormatReader();
     multiFormatReader.setHints(hints);
     this.mHelper = helper;
     this.mCameraManager = manager;
   }
 
-  @Override
-  public void handleMessage(Message message) {
-    if (message == null || !running) {
-      return;
-    }
-    switch (message.what) {
-      case CaptureActivityHelper.DECODE:
-        decode((byte[]) message.obj, message.arg1, message.arg2);
-        break;
-      case CaptureActivityHelper.QUIT:
-        running = false;
-        Looper.myLooper().quit();
-        break;
-    }
+  public void quit(){
+    running = false;
+    Looper.myLooper().quit();
   }
 
   /**
@@ -74,7 +61,10 @@ final class DecodeHandler extends Handler {
    * @param width  The width of the preview frame.
    * @param height The height of the preview frame.
    */
-  private void decode(byte[] data, int width, int height) {
+  public void decode(byte[] data, int width, int height) {
+    if (!running){
+      return;
+    }
     Result rawResult = null;
     PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
     if (source != null) {

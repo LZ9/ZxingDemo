@@ -17,7 +17,6 @@
 package com.lodz.android.zxingdemo.old;
 
 
-import android.os.Handler;
 import android.os.Looper;
 
 import com.google.zxing.BarcodeFormat;
@@ -44,7 +43,7 @@ final class DecodeThread extends Thread {
 
   private final CaptureActivityHelper mHelper;
   private final Map<DecodeHintType,Object> hints;
-  private Handler handler;
+  private DecodeHelper mDecodeHelper;
   private final CountDownLatch handlerInitLatch;
 
   private CameraManager mCameraManager;
@@ -83,19 +82,14 @@ final class DecodeThread extends Thread {
     hints.put(DecodeHintType.NEED_RESULT_POINT_CALLBACK, resultPointCallback);
   }
 
-  Handler getHandler() {
-    try {
-      handlerInitLatch.await();
-    } catch (InterruptedException ie) {
-      // continue?
-    }
-    return handler;
+  public DecodeHelper getDecodeHelper(){
+    return mDecodeHelper;
   }
 
   @Override
   public void run() {
     Looper.prepare();
-    handler = new DecodeHandler(mHelper, hints,mCameraManager );
+    mDecodeHelper = new DecodeHelper(mHelper, hints,mCameraManager );
     handlerInitLatch.countDown();
     Looper.loop();
   }

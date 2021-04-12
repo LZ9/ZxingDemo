@@ -20,11 +20,11 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
-import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.google.zxing.PlanarYUVLuminanceSource;
+import com.lodz.android.zxingdemo.old.DecodeHelper;
 import com.lodz.android.zxingdemo.old.camera.open.OpenCamera;
 import com.lodz.android.zxingdemo.old.camera.open.OpenCameraInterface;
 
@@ -162,7 +162,7 @@ public final class CameraManager {
     }
     if (camera != null && previewing) {
       camera.getCamera().stopPreview();
-      previewCallback.setHandler(null, 0);
+      previewCallback.setDecodeHelper(null);
       previewing = false;
     }
   }
@@ -196,13 +196,11 @@ public final class CameraManager {
    * in the message.obj field, with width and height encoded as message.arg1 and message.arg2,
    * respectively.
    *
-   * @param handler The handler to send the message to.
-   * @param message The what field of the message to be sent.
    */
-  public synchronized void requestPreviewFrame(Handler handler, int message) {
+  public synchronized void requestPreviewFrame(DecodeHelper decodeHelper) {
     OpenCamera theCamera = camera;
     if (theCamera != null && previewing) {
-      previewCallback.setHandler(handler, message);
+      previewCallback.setDecodeHelper(decodeHelper);
       theCamera.getCamera().setOneShotPreviewCallback(previewCallback);
     }
   }

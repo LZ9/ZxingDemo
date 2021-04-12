@@ -19,7 +19,6 @@ package com.lodz.android.zxingdemo.old;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Message;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
@@ -37,7 +36,6 @@ import java.util.Collection;
  */
 public final class CaptureActivityHelper  {
 
-  public static final int QUIT = 102;
   public static final int DECODE = 106;
 
 
@@ -86,7 +84,7 @@ public final class CaptureActivityHelper  {
       @Override
       public void run() {
         state = State.PREVIEW;
-        cameraManager.requestPreviewFrame(decodeThread.getHandler(), CaptureActivityHelper.DECODE);
+        cameraManager.requestPreviewFrame(decodeThread.getDecodeHelper());
       }
     });
   }
@@ -115,8 +113,7 @@ public final class CaptureActivityHelper  {
   public void quitSynchronously() {
     state = State.DONE;
     cameraManager.stopPreview();
-    Message quit = Message.obtain(decodeThread.getHandler(), CaptureActivityHelper.QUIT);
-    quit.sendToTarget();
+    decodeThread.getDecodeHelper().quit();
     try {
       // Wait at most half a second; should be enough time, and onPause() will timeout quickly
       decodeThread.join(500L);
@@ -130,7 +127,7 @@ public final class CaptureActivityHelper  {
   private void restartPreviewAndDecode() {
     if (state == State.SUCCESS) {
       state = State.PREVIEW;
-      cameraManager.requestPreviewFrame(decodeThread.getHandler(), CaptureActivityHelper.DECODE);
+      cameraManager.requestPreviewFrame(decodeThread.getDecodeHelper());
       activity.drawViewfinder();
     }
   }
