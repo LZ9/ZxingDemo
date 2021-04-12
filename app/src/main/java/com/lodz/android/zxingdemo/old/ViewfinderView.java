@@ -28,7 +28,6 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import com.google.zxing.ResultPoint;
-import com.lodz.android.corekt.log.PrintLog;
 import com.lodz.android.zxingdemo.R;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
@@ -46,9 +45,13 @@ public final class ViewfinderView extends View {
   /** 扫描线的透明度 */
   private static final int[] LASER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
 
+  /** 动画延迟 */
   private static final long ANIMATION_DELAY = 80L;
-  private static final int CURRENT_POINT_OPACITY = 0xA0;
+  /** 点位透明度 */
+  private static final int CURRENT_POINT_OPACITY = 160;
+  /** 最多展示点位 */
   private static final int MAX_RESULT_POINTS = 20;
+  /** 点位直径 */
   private static final int POINT_SIZE = 6;
 
   private CameraManager mCameraManager;
@@ -65,8 +68,10 @@ public final class ViewfinderView extends View {
   /** 扫描线透明度 */
   private int laserAlpha = 0;
 
-  private List<ResultPoint> mPossibleResultPoints = new ArrayList<>();
-  private List<ResultPoint> mLastPossibleResultPoints = null;
+  /** 识别点列表 */
+  private List<ResultPoint> mPointList = new ArrayList<>();
+  /** 最后一次的识别点列表 */
+  private List<ResultPoint> mLastPointList = null;
 
   public ViewfinderView(Context context) {
     super(context);
@@ -123,36 +128,33 @@ public final class ViewfinderView extends View {
     float scaleX = frame.width() / (float) previewFrame.width();
     float scaleY = frame.height() / (float) previewFrame.height();
 
-    List<ResultPoint> currentPossible = mPossibleResultPoints;
-    List<ResultPoint> currentLast = mLastPossibleResultPoints;
     int frameLeft = frame.left;
     int frameTop = frame.top;
-    if (currentPossible.isEmpty()) {
-      mLastPossibleResultPoints = null;
+
+
+
+    if (mPointList.isEmpty()) {
+      mLastPointList = null;
     } else {
       // 画识别圆点
-      mPossibleResultPoints = new ArrayList<>();
-      mLastPossibleResultPoints = currentPossible;
+      mLastPointList = new ArrayList<>();
+      mLastPointList.addAll(mPointList);
+      mPointList.clear();
       paint.setAlpha(CURRENT_POINT_OPACITY);
       paint.setColor(resultPointColor);
-      synchronized (currentPossible) {
-        for (ResultPoint point : currentPossible) {
-          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX),
-                  frameTop + (int) (point.getY() * scaleY),
-                  POINT_SIZE, paint);
+      synchronized (this) {
+        for (ResultPoint point : mLastPointList) {
+          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), POINT_SIZE, paint);
         }
       }
-    }
-    if (currentLast != null) {
+
       // 画识别圆点
       paint.setAlpha(CURRENT_POINT_OPACITY / 2);
       paint.setColor(resultPointColor);
-      synchronized (currentLast) {
+      synchronized (this) {
         float radius = POINT_SIZE / 2.0f;
-        for (ResultPoint point : currentLast) {
-          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX),
-                  frameTop + (int) (point.getY() * scaleY),
-                  radius, paint);
+        for (ResultPoint point : mLastPointList) {
+          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), radius, paint);
         }
       }
     }
@@ -170,18 +172,13 @@ public final class ViewfinderView extends View {
     invalidate();
   }
 
+  /** 添加识别点信息 */
   public void addPossibleResultPoint(ResultPoint point) {
-    List<ResultPoint> points = mPossibleResultPoints;
-    synchronized (this) {
-      points.add(point);
-      int size = points.size();
-      if (size > MAX_RESULT_POINTS) {
-        // trim it
-        points.subList(0, size - MAX_RESULT_POINTS / 2).clear();
-      }
+    mPointList.add(point);
+    int size = mPointList.size();
+    if (size > MAX_RESULT_POINTS) {
+      mPointList.subList(0, size - MAX_RESULT_POINTS / 2).clear();
     }
-    PrintLog.d("testtag", "possibleResultPoints size : " + mPossibleResultPoints.size());
-    PrintLog.e("testtag", "getX : " + point.getX() + " ; getY : " + point.getY());
   }
 
 }
