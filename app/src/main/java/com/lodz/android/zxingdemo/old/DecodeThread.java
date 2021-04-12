@@ -23,6 +23,7 @@ import android.os.Looper;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.ResultPointCallback;
+import com.lodz.android.zxingdemo.main.decode.DecodeFormatManager;
 
 import java.util.Collection;
 import java.util.EnumMap;
@@ -58,15 +59,15 @@ final class DecodeThread extends Thread {
     // The prefs can't change while the thread is running, so pick them up once here.
     if (decodeFormats == null || decodeFormats.isEmpty()) {
       decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
-      decodeFormats.addAll(DecodeFormatManager.QR_CODE_FORMATS);//二维码
-      decodeFormats.addAll(DecodeFormatManager.INDUSTRIAL_FORMATS);// 条形码，需要横屏识别
+      decodeFormats.addAll(DecodeFormatManager.getQR_CODE_FORMATS());//二维码
+      decodeFormats.addAll(DecodeFormatManager.getINDUSTRIAL_FORMATS());// 条形码，需要横屏识别
 
       boolean isDefaultAdd = false;
       if (isDefaultAdd){
-        decodeFormats.addAll(DecodeFormatManager.PRODUCT_FORMATS);
-        decodeFormats.addAll(DecodeFormatManager.DATA_MATRIX_FORMATS);
-        decodeFormats.addAll(DecodeFormatManager.AZTEC_FORMATS);
-        decodeFormats.addAll(DecodeFormatManager.PDF417_FORMATS);
+        decodeFormats.addAll(DecodeFormatManager.getPRODUCT_FORMATS());
+        decodeFormats.addAll(DecodeFormatManager.getDATA_MATRIX_FORMATS());
+        decodeFormats.addAll(DecodeFormatManager.getAZTEC_FORMATS());
+        decodeFormats.addAll(DecodeFormatManager.getPDF417_FORMATS());
       }
     }
     hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);

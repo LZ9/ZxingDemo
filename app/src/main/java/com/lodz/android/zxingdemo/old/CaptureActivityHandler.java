@@ -39,8 +39,6 @@ import java.util.Collection;
  */
 public final class CaptureActivityHandler extends Handler {
 
-  private static final String TAG = CaptureActivityHandler.class.getSimpleName();
-
   public static final int RESTART_PREVIEW = 100;
   public static final int RETURN_SCAN_RESULT = 101;
   public static final int QUIT = 102;
@@ -62,10 +60,7 @@ public final class CaptureActivityHandler extends Handler {
     DONE
   }
 
-  CaptureActivityHandler(CaptureActivity activity,
-                         Collection<BarcodeFormat> decodeFormats,
-                         String characterSet,
-                         CameraManager cameraManager) {
+  CaptureActivityHandler(CaptureActivity activity, Collection<BarcodeFormat> decodeFormats, String characterSet, CameraManager cameraManager) {
     this.activity = activity;
     decodeThread = new DecodeThread(activity, decodeFormats, characterSet, new ResultPointCallback() {
       @Override
