@@ -29,20 +29,25 @@ import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
+import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
 final class DecodeHandler extends Handler {
 
-  private final CaptureActivity activity;
   private final MultiFormatReader multiFormatReader;
   private boolean running = true;
 
-  DecodeHandler(CaptureActivity activity, Map<DecodeHintType,Object> hints) {
+  private CaptureActivityHelper mHelper;
+
+  private CameraManager mCameraManager;
+
+  DecodeHandler(CaptureActivityHelper helper, Map<DecodeHintType,Object> hints, CameraManager manager) {
     multiFormatReader = new MultiFormatReader();
     multiFormatReader.setHints(hints);
-    this.activity = activity;
+    this.mHelper = helper;
+    this.mCameraManager = manager;
   }
 
   @Override
@@ -51,10 +56,10 @@ final class DecodeHandler extends Handler {
       return;
     }
     switch (message.what) {
-      case CaptureActivityHandler.DECODE:
+      case CaptureActivityHelper.DECODE:
         decode((byte[]) message.obj, message.arg1, message.arg2);
         break;
-      case CaptureActivityHandler.QUIT:
+      case CaptureActivityHelper.QUIT:
         running = false;
         Looper.myLooper().quit();
         break;
@@ -71,7 +76,7 @@ final class DecodeHandler extends Handler {
    */
   private void decode(byte[] data, int width, int height) {
     Result rawResult = null;
-    PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(data, width, height);
+    PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
     if (source != null) {
       BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
       try {
@@ -83,21 +88,13 @@ final class DecodeHandler extends Handler {
       }
     }
 
-    Handler handler = activity.getHandler();
     if (rawResult != null) {
       // Don't log the barcode contents for security.
-      if (handler != null) {
-        Message message = Message.obtain(handler, CaptureActivityHandler.DECODE_SUCCEEDED, rawResult);
-        Bundle bundle = new Bundle();
-        bundleThumbnail(source, bundle);
-        message.setData(bundle);
-        message.sendToTarget();
-      }
+      Bundle bundle = new Bundle();
+      bundleThumbnail(source, bundle);
+      mHelper.decodeSucceeded(rawResult, bundle);
     } else {
-      if (handler != null) {
-        Message message = Message.obtain(handler, CaptureActivityHandler.DECODE_FAILED);
-        message.sendToTarget();
-      }
+      mHelper.decodeFailed();
     }
   }
 

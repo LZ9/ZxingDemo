@@ -25,8 +25,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -76,7 +74,7 @@ public final class CaptureActivity extends AppCompatActivity {
                  ResultMetadataType.POSSIBLE_COUNTRY);
 
   private CameraManager cameraManager;
-  private CaptureActivityHandler handler;
+  private CaptureActivityHelper mHelper;
   private Result savedResultToShow;
   private ViewfinderView viewfinderView;
   private Collection<BarcodeFormat> decodeFormats;
@@ -87,10 +85,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
   ViewfinderView getViewfinderView() {
     return viewfinderView;
-  }
-
-  public Handler getHandler() {
-    return handler;
   }
 
   CameraManager getCameraManager() {
@@ -126,8 +120,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     viewfinderView.setCameraManager(cameraManager);
-
-    handler = null;
 
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
@@ -173,9 +165,9 @@ public final class CaptureActivity extends AppCompatActivity {
 
   @Override
   public void finish() {
-    if (handler != null) {
-      handler.quitSynchronously();
-      handler = null;
+    if (mHelper != null) {
+      mHelper.quitSynchronously();
+      mHelper = null;
     }
     beepManager.close();
     cameraManager.closeDriver();
@@ -191,15 +183,14 @@ public final class CaptureActivity extends AppCompatActivity {
 
   private void decodeOrStoreSavedBitmap(Result result) {
     // Bitmap isn't used yet -- will be used soon
-    if (handler == null) {
+    if (mHelper == null) {
       savedResultToShow = result;
     } else {
       if (result != null) {
         savedResultToShow = result;
       }
       if (savedResultToShow != null) {
-        Message message = Message.obtain(handler, CaptureActivityHandler.DECODE_SUCCEEDED, savedResultToShow);
-        handler.sendMessage(message);
+        mHelper.decodeSucceeded(savedResultToShow, null);
       }
       savedResultToShow = null;
     }
@@ -333,8 +324,14 @@ public final class CaptureActivity extends AppCompatActivity {
     try {
       cameraManager.openDriver(surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
-      if (handler == null) {
-        handler = new CaptureActivityHandler(this, decodeFormats, characterSet, cameraManager);
+      if (mHelper == null) {
+        mHelper = new CaptureActivityHelper(this, decodeFormats, characterSet, cameraManager);
+        mHelper.setListener(new CaptureActivityHelper.CaptureActivityHelperListener() {
+          @Override
+          public void a() {
+
+          }
+        });
       }
       decodeOrStoreSavedBitmap(null);
     } catch (Exception ioe) {
@@ -365,8 +362,8 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   public void restartPreviewAfterDelay(long delayMS) {
-    if (handler != null) {
-      handler.sendEmptyMessageDelayed(CaptureActivityHandler.RESTART_PREVIEW, delayMS);
+    if (mHelper != null) {
+      mHelper.restartPreview(delayMS);
     }
     resetStatusView();
   }
