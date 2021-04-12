@@ -19,6 +19,7 @@ package com.lodz.android.zxingdemo.old;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -45,8 +46,8 @@ import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
-import com.lodz.android.zxingdemo.main.ResultBean;
-import com.lodz.android.zxingdemo.main.ResultDialog;
+import com.lodz.android.zxingdemo.main.result.ResultBean;
+import com.lodz.android.zxingdemo.main.result.ResultDialog;
 import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
@@ -66,6 +67,11 @@ import java.util.Map;
 public final class CaptureActivity extends AppCompatActivity {
 
   private static final String TAG = CaptureActivity.class.getSimpleName();
+
+  public static void start(Context context) {
+      Intent starter = new Intent(context, CaptureActivity.class);
+      context.startActivity(starter);
+  }
 
   private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
       EnumSet.of(ResultMetadataType.ISSUE_NUMBER,

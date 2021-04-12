@@ -1,4 +1,4 @@
-package com.lodz.android.zxingdemo.main
+package com.lodz.android.zxingdemo.main.result
 
 import android.content.Context
 import android.graphics.BitmapFactory

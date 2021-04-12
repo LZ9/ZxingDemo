@@ -18,7 +18,6 @@ package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Looper;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -50,7 +49,7 @@ public final class DecodeHelper {
 
   public void quit(){
     running = false;
-    Looper.myLooper().quit();
+//    Looper.myLooper().quit();
   }
 
   /**
