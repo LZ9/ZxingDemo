@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId "com.lodz.android.zxingdemo"
         minSdkVersion 21
-        targetSdkVersion 22
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
     }
@@ -31,7 +31,9 @@ android {
 }
 
 dependencies {
-    implementation 'com.lodz:pandora:1.6.1'
+    implementation 'ink.lodz:pandora:1.6.3'
+    // 权限申请
+    implementation "com.github.permissions-dispatcher:ktx:1.0.5"
 
     implementation 'com.google.zxing:core:3.4.1'
     implementation 'com.google.zxing:android-core:3.3.0'
