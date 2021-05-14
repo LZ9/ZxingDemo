@@ -17,8 +17,6 @@
 package com.lodz.android.zxingdemo.old;
 
 
-import android.os.Looper;
-
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.ResultPointCallback;
@@ -80,6 +78,8 @@ final class DecodeThread extends Thread {
       hints.put(DecodeHintType.CHARACTER_SET, characterSet);
     }
     hints.put(DecodeHintType.NEED_RESULT_POINT_CALLBACK, resultPointCallback);
+    mDecodeHelper = new DecodeHelper(mHelper, hints,mCameraManager );
+    handlerInitLatch.countDown();
   }
 
   public DecodeHelper getDecodeHelper(){
@@ -88,10 +88,10 @@ final class DecodeThread extends Thread {
 
   @Override
   public void run() {
-    Looper.prepare();
-    mDecodeHelper = new DecodeHelper(mHelper, hints,mCameraManager );
-    handlerInitLatch.countDown();
-    Looper.loop();
+//    Looper.prepare();
+//    mDecodeHelper = new DecodeHelper(mHelper, hints,mCameraManager );
+//    handlerInitLatch.countDown();
+//    Looper.loop();
   }
 
 }
