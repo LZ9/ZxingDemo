@@ -39,9 +39,9 @@ public final class OpenCameraInterface {
    * @param cameraId camera ID of the camera to use. A negative value
    *  or {@link #NO_REQUESTED_CAMERA} means "no preference", in which case a rear-facing
    *  camera is returned if possible or else any camera
-   * @return handle to {@link OpenCamera} that was opened
+   * @return handle to {@link CameraBean} that was opened
    */
-  public static OpenCamera open(int cameraId) {
+  public static CameraBean open(int cameraId) {
 
     int numCameras = Camera.getNumberOfCameras();
     if (numCameras == 0) {
@@ -76,7 +76,7 @@ public final class OpenCameraInterface {
     if (camera == null) {
       return null;
     }
-    return new OpenCamera(cameraId,
+    return new CameraBean(cameraId,
             camera,
             cameraInfo.facing,
             cameraInfo.orientation);

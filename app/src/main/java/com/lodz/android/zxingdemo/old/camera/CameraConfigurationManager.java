@@ -25,7 +25,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
-import com.lodz.android.zxingdemo.old.camera.open.OpenCamera;
+import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
 
 
 /**
@@ -52,7 +52,7 @@ final class CameraConfigurationManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  void initFromCameraParameters(OpenCamera camera) {
+  void initFromCameraParameters(CameraBean camera) {
     Camera.Parameters parameters = camera.getCamera().getParameters();
     WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     Display display = manager.getDefaultDisplay();
@@ -122,7 +122,7 @@ final class CameraConfigurationManager {
     Log.i(TAG, "Preview size on screen: " + previewSizeOnScreen);
   }
 
-  void setDesiredCameraParameters(OpenCamera camera, boolean safeMode) {
+  void setDesiredCameraParameters(CameraBean camera, boolean safeMode) {
 
     Camera theCamera = camera.getCamera();
     Camera.Parameters parameters = theCamera.getParameters();

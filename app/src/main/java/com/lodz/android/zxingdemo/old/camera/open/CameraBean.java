@@ -22,14 +22,14 @@ import android.hardware.Camera;
  * Represents an open {@link Camera} and its metadata, like facing direction and orientation.
  */
 @SuppressWarnings("deprecation") // camera APIs
-public final class OpenCamera {
+public final class CameraBean {
   
   private final int index;
   private final Camera camera;
   private final int facing;
   private final int orientation;
   
-  public OpenCamera(int index, Camera camera, int facing, int orientation) {
+  public CameraBean(int index, Camera camera, int facing, int orientation) {
     this.index = index;
     this.camera = camera;
     this.facing = facing;

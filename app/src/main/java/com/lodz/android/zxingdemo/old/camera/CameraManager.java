@@ -25,7 +25,7 @@ import android.view.SurfaceHolder;
 
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.lodz.android.zxingdemo.old.DecodeHelper;
-import com.lodz.android.zxingdemo.old.camera.open.OpenCamera;
+import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
 import com.lodz.android.zxingdemo.old.camera.open.OpenCameraInterface;
 
 import java.io.IOException;
@@ -47,9 +47,8 @@ public final class CameraManager {
   private static final int MAX_FRAME_WIDTH = 1200; // = 5/8 * 1920
   private static final int MAX_FRAME_HEIGHT = 675; // = 5/8 * 1080
 
-  private final Context context;
   private final CameraConfigurationManager configManager;
-  private OpenCamera camera;
+  private CameraBean mCameraBean;
   private AutoFocusManager autoFocusManager;
   private Rect framingRect;
   private Rect framingRectInPreview;
@@ -65,7 +64,6 @@ public final class CameraManager {
   private final PreviewCallback previewCallback;
 
   public CameraManager(Context context) {
-    this.context = context;
     this.configManager = new CameraConfigurationManager(context);
     previewCallback = new PreviewCallback(configManager);
   }
@@ -77,13 +75,13 @@ public final class CameraManager {
    * @throws IOException Indicates the camera driver failed to open.
    */
   public synchronized void openDriver(SurfaceHolder holder) throws IOException {
-    OpenCamera theCamera = camera;
+    CameraBean theCamera = mCameraBean;
     if (theCamera == null) {
       theCamera = OpenCameraInterface.open(requestedCameraId);
       if (theCamera == null) {
         throw new IOException("Camera.open() failed to return object from driver");
       }
-      camera = theCamera;
+      mCameraBean = theCamera;
     }
 
     if (!initialized) {
@@ -123,16 +121,16 @@ public final class CameraManager {
   }
 
   public synchronized boolean isOpen() {
-    return camera != null;
+    return mCameraBean != null;
   }
 
   /**
    * Closes the camera driver if still in use.
    */
   public synchronized void closeDriver() {
-    if (camera != null) {
-      camera.getCamera().release();
-      camera = null;
+    if (mCameraBean != null) {
+      mCameraBean.getCamera().release();
+      mCameraBean = null;
       // Make sure to clear these each time we close the camera, so that any scanning rect
       // requested by intent is forgotten.
       framingRect = null;
@@ -144,7 +142,7 @@ public final class CameraManager {
    * Asks the camera hardware to begin drawing preview frames to the screen.
    */
   public synchronized void startPreview() {
-    OpenCamera theCamera = camera;
+    CameraBean theCamera = mCameraBean;
     if (theCamera != null && !previewing) {
       theCamera.getCamera().startPreview();
       previewing = true;
@@ -160,8 +158,8 @@ public final class CameraManager {
       autoFocusManager.stop();
       autoFocusManager = null;
     }
-    if (camera != null && previewing) {
-      camera.getCamera().stopPreview();
+    if (mCameraBean != null && previewing) {
+      mCameraBean.getCamera().stopPreview();
       previewCallback.setDecodeHelper(null);
       previewing = false;
     }
@@ -172,7 +170,7 @@ public final class CameraManager {
    * @param newSetting if {@code true}, light should be turned on if currently off. And vice versa.
    */
   public synchronized void setTorch(boolean newSetting) {
-    OpenCamera theCamera = camera;
+    CameraBean theCamera = mCameraBean;
     if (theCamera != null && newSetting != configManager.getTorchState(theCamera.getCamera())) {
       boolean wasAutoFocusManager = autoFocusManager != null;
       if (wasAutoFocusManager) {
@@ -188,7 +186,7 @@ public final class CameraManager {
   }
 
   public synchronized boolean getTorchState() {
-    return configManager.getTorchState(camera.getCamera());
+    return configManager.getTorchState(mCameraBean.getCamera());
   }
 
   /**
@@ -198,7 +196,7 @@ public final class CameraManager {
    *
    */
   public synchronized void requestPreviewFrame(DecodeHelper decodeHelper) {
-    OpenCamera theCamera = camera;
+    CameraBean theCamera = mCameraBean;
     if (theCamera != null && previewing) {
       previewCallback.setDecodeHelper(decodeHelper);
       theCamera.getCamera().setOneShotPreviewCallback(previewCallback);
@@ -214,7 +212,7 @@ public final class CameraManager {
    */
   public synchronized Rect getFramingRect() {
     if (framingRect == null) {
-      if (camera == null) {
+      if (mCameraBean == null) {
         return null;
       }
       Point screenResolution = configManager.getScreenResolution();
