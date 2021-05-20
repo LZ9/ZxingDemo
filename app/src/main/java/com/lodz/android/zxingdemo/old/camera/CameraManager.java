@@ -54,7 +54,6 @@ public final class CameraManager {
   private Rect framingRectInPreview;
   private boolean initialized;
   private boolean previewing;
-  private int requestedCameraId = OpenCameraInterface.NO_REQUESTED_CAMERA;
   private int requestedFramingRectWidth;
   private int requestedFramingRectHeight;
   /**
@@ -74,10 +73,10 @@ public final class CameraManager {
    * @param holder The surface object which the camera will draw preview frames into.
    * @throws IOException Indicates the camera driver failed to open.
    */
-  public synchronized void openDriver(SurfaceHolder holder) throws IOException {
+  public synchronized void openDriver(int cameraId, SurfaceHolder holder) throws IOException {
     CameraBean theCamera = mCameraBean;
     if (theCamera == null) {
-      theCamera = OpenCameraInterface.open(requestedCameraId);
+      theCamera = OpenCameraInterface.open(cameraId);
       if (theCamera == null) {
         throw new IOException("Camera.open() failed to return object from driver");
       }
@@ -275,17 +274,6 @@ public final class CameraManager {
       framingRectInPreview = rect;
     }
     return framingRectInPreview;
-  }
-
-
-  /**
-   * Allows third party apps to specify the camera ID, rather than determine
-   * it automatically based on available cameras and their orientation.
-   *
-   * @param cameraId camera ID of the camera to use. A negative value means "no preference".
-   */
-  public synchronized void setManualCameraId(int cameraId) {
-    requestedCameraId = cameraId;
   }
 
   /**

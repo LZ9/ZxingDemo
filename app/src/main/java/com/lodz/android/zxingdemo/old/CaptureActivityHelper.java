@@ -36,13 +36,9 @@ import java.util.Collection;
  */
 public final class CaptureActivityHelper  {
 
-  public static final int DECODE = 106;
-
-
-
   private CaptureActivityHelperListener mListener;
 
-  private final CaptureActivity activity;
+//  private final CaptureActivity activity;
   private final DecodeThread decodeThread;
   private State state;
   private final CameraManager cameraManager;
@@ -53,12 +49,13 @@ public final class CaptureActivityHelper  {
     DONE
   }
 
-  CaptureActivityHelper(CaptureActivity activity, Collection<BarcodeFormat> decodeFormats, String characterSet, CameraManager cameraManager) {
-    this.activity = activity;
+  CaptureActivityHelper(Collection<BarcodeFormat> decodeFormats, String characterSet, CameraManager cameraManager) {
     decodeThread = new DecodeThread(this, cameraManager,decodeFormats, characterSet, new ResultPointCallback() {
       @Override
       public void foundPossibleResultPoint(ResultPoint point) {
-        activity.getViewfinderView().addPossibleResultPoint(point);
+        if (mListener != null){
+          mListener.onFoundPossibleResultPoint(point);
+        }
       }
     });
     decodeThread.start();
@@ -105,7 +102,9 @@ public final class CaptureActivityHelper  {
           }
           scaleFactor = bundle.getFloat(DecodeThread.BARCODE_SCALED_FACTOR);
         }
-        activity.handleDecode(result, barcode, scaleFactor);
+        if (mListener != null){
+          mListener.decode(result, barcode, scaleFactor);
+        }
       }
     });
   }
@@ -128,7 +127,9 @@ public final class CaptureActivityHelper  {
     if (state == State.SUCCESS) {
       state = State.PREVIEW;
       cameraManager.requestPreviewFrame(decodeThread.getDecodeHelper());
-      activity.drawViewfinder();
+      if (mListener != null){
+        mListener.restartPreviewAndDecode();
+      }
     }
   }
 
@@ -136,8 +137,12 @@ public final class CaptureActivityHelper  {
     mListener = listener;
   }
 
-  public interface CaptureActivityHelperListener{
-    void a();
+  public interface CaptureActivityHelperListener {
 
+    void onFoundPossibleResultPoint(ResultPoint point);
+
+    void decode(Result rawResult, Bitmap barcode, float scaleFactor);
+
+    void restartPreviewAndDecode();
   }
 }

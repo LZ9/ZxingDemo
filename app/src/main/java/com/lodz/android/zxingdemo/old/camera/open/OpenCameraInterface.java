@@ -27,8 +27,6 @@ public final class OpenCameraInterface {
 
   private static final String TAG = OpenCameraInterface.class.getName();
 
-  /** For {@link #open(int)}, means no preference for which camera to open. */
-  public static final int NO_REQUESTED_CAMERA = -1;
 
   private OpenCameraInterface() {
   }
@@ -36,39 +34,10 @@ public final class OpenCameraInterface {
   /**
    * Opens the requested camera with {@link Camera#open(int)}, if one exists.
    *
-   * @param cameraId camera ID of the camera to use. A negative value
-   *  or {@link #NO_REQUESTED_CAMERA} means "no preference", in which case a rear-facing
-   *  camera is returned if possible or else any camera
+   * @param cameraId camera ID of the camera to use
    * @return handle to {@link CameraBean} that was opened
    */
   public static CameraBean open(int cameraId) {
-
-    int numCameras = Camera.getNumberOfCameras();
-    if (numCameras == 0) {
-      Log.w(TAG, "No cameras!");
-      return null;
-    }
-    if (cameraId >= numCameras) {
-      Log.w(TAG, "Requested camera does not exist: " + cameraId);
-      return null;
-    }
-
-    if (cameraId <= NO_REQUESTED_CAMERA) {
-      cameraId = 0;
-      while (cameraId < numCameras) {
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        Camera.getCameraInfo(cameraId, cameraInfo);
-        if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-          break;
-        }
-        cameraId++;
-      }
-      if (cameraId == numCameras) {
-        Log.i(TAG, "No camera facing Camera.CameraInfo.CAMERA_FACING_BACK; returning camera #0");
-        cameraId = 0;
-      }
-    }
-
     Log.i(TAG, "Opening camera #" + cameraId);
     Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
     Camera.getCameraInfo(cameraId, cameraInfo);

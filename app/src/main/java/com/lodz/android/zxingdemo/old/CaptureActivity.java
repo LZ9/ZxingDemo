@@ -25,6 +25,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
@@ -46,9 +47,9 @@ import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
+import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.main.result.ResultBean;
 import com.lodz.android.zxingdemo.main.result.ResultDialog;
-import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
@@ -328,14 +329,24 @@ public final class CaptureActivity extends AppCompatActivity {
 //      return;
 //    }
     try {
-      cameraManager.openDriver(surfaceHolder);
+      cameraManager.openDriver(Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
-        mHelper = new CaptureActivityHelper(this, decodeFormats, characterSet, cameraManager);
+        mHelper = new CaptureActivityHelper(decodeFormats, characterSet, cameraManager);
         mHelper.setListener(new CaptureActivityHelper.CaptureActivityHelperListener() {
           @Override
-          public void a() {
+          public void onFoundPossibleResultPoint(ResultPoint point) {
+            getViewfinderView().addPossibleResultPoint(point);
+          }
 
+          @Override
+          public void decode(Result result, Bitmap barcode, float scaleFactor) {
+            handleDecode(result, barcode, scaleFactor);
+          }
+
+          @Override
+          public void restartPreviewAndDecode() {
+            drawViewfinder();
           }
         });
       }
