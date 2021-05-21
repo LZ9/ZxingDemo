@@ -21,9 +21,6 @@ class ResultBean {
     /** 时间 */
     var time: String = ""
 
-    /** 元数据 */
-    var meta: String = ""
-
     /** 识别结果 */
     var contents: String = ""
 

@@ -49,7 +49,6 @@ public final class CameraManager {
 
   private final CameraConfigurationManager configManager;
   private CameraBean mCameraBean;
-  private AutoFocusManager autoFocusManager;
   private Rect framingRect;
   private Rect framingRectInPreview;
   private boolean initialized;
@@ -145,7 +144,6 @@ public final class CameraManager {
     if (theCamera != null && !previewing) {
       theCamera.getCamera().startPreview();
       previewing = true;
-      autoFocusManager = new AutoFocusManager(theCamera.getCamera());
     }
   }
 
@@ -153,10 +151,6 @@ public final class CameraManager {
    * Tells the camera to stop drawing preview frames.
    */
   public synchronized void stopPreview() {
-    if (autoFocusManager != null) {
-      autoFocusManager.stop();
-      autoFocusManager = null;
-    }
     if (mCameraBean != null && previewing) {
       mCameraBean.getCamera().stopPreview();
       previewCallback.setDecodeHelper(null);
@@ -171,16 +165,7 @@ public final class CameraManager {
   public synchronized void setTorch(boolean newSetting) {
     CameraBean theCamera = mCameraBean;
     if (theCamera != null && newSetting != configManager.getTorchState(theCamera.getCamera())) {
-      boolean wasAutoFocusManager = autoFocusManager != null;
-      if (wasAutoFocusManager) {
-        autoFocusManager.stop();
-        autoFocusManager = null;
-      }
       configManager.setTorch(theCamera.getCamera(), newSetting);
-      if (wasAutoFocusManager) {
-        autoFocusManager = new AutoFocusManager(theCamera.getCamera());
-        autoFocusManager.start();
-      }
     }
   }
 

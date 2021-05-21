@@ -56,7 +56,7 @@ class ResultDialog(context: Context) : BaseDialog(context) {
         mFormatTv.text = context.getString(R.string.msg_default_format).append(bean.format)
         mTypeTv.text = context.getString(R.string.msg_default_type).append(bean.type)
         mTimeTv.text = context.getString(R.string.msg_default_time).append(bean.time)
-        mMetaTv.text = context.getString(R.string.msg_default_meta).append(bean.meta)
+        mMetaTv.text = context.getString(R.string.msg_default_meta).append("")
         mContentsTv.text = bean.contents
     }
 

@@ -41,7 +41,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
-import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
@@ -54,8 +53,6 @@ import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.EnumSet;
-import java.util.Map;
 
 /**
  * This activity opens the camera and does the actual scanning on a background thread. It draws a
@@ -74,29 +71,14 @@ public final class CaptureActivity extends AppCompatActivity {
       context.startActivity(starter);
   }
 
-  private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
-      EnumSet.of(ResultMetadataType.ISSUE_NUMBER,
-                 ResultMetadataType.SUGGESTED_PRICE,
-                 ResultMetadataType.ERROR_CORRECTION_LEVEL,
-                 ResultMetadataType.POSSIBLE_COUNTRY);
-
-  private CameraManager cameraManager;
+  private CameraManager mCameraManager;
   private CaptureActivityHelper mHelper;
-  private Result savedResultToShow;
   private ViewfinderView viewfinderView;
   private Collection<BarcodeFormat> decodeFormats;
   private String characterSet;
   private BeepManager beepManager;
 
   private SurfaceView mSurfaceView;
-
-  ViewfinderView getViewfinderView() {
-    return viewfinderView;
-  }
-
-  CameraManager getCameraManager() {
-    return cameraManager;
-  }
 
   @Override
   public void onCreate(Bundle icicle) {
@@ -112,7 +94,7 @@ public final class CaptureActivity extends AppCompatActivity {
     flashBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        cameraManager.setTorch(!cameraManager.getTorchState());
+        mCameraManager.setTorch(!mCameraManager.getTorchState());
       }
     });
 
@@ -123,10 +105,10 @@ public final class CaptureActivity extends AppCompatActivity {
     // want to open the camera driver and measure the screen size if we're going to show the help on
     // first launch. That led to bugs where the scanning rectangle was the wrong size and partially
     // off screen.
-    cameraManager = new CameraManager(getApplication());
+    mCameraManager = new CameraManager(getApplication());
 
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
-    viewfinderView.setCameraManager(cameraManager);
+    viewfinderView.setCameraManager(mCameraManager);
 
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
@@ -177,7 +159,7 @@ public final class CaptureActivity extends AppCompatActivity {
       mHelper = null;
     }
     beepManager.close();
-    cameraManager.closeDriver();
+    mCameraManager.closeDriver();
     //historyManager = null; // Keep for onActivityResult
     mSurfaceView.getHolder().removeCallback(mCallback);
     super.finish();
@@ -191,16 +173,12 @@ public final class CaptureActivity extends AppCompatActivity {
   private void decodeOrStoreSavedBitmap(Result result) {
     // Bitmap isn't used yet -- will be used soon
     if (mHelper == null) {
-      savedResultToShow = result;
-    } else {
-      if (result != null) {
-        savedResultToShow = result;
-      }
-      if (savedResultToShow != null) {
-        mHelper.decodeSucceeded(savedResultToShow, null);
-      }
-      savedResultToShow = null;
+      return;
     }
+    if (result == null) {
+      return;
+    }
+    mHelper.decodeSucceeded(result, null);
   }
 
   private SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
@@ -291,19 +269,6 @@ public final class CaptureActivity extends AppCompatActivity {
     bean.setType(result.getType().toString());
     bean.setTime(DateUtils.getFormatString(DateUtils.TYPE_2, new Date(rawResult.getTimestamp())));
 
-    Map<ResultMetadataType,Object> metadata = rawResult.getResultMetadata();
-    if (metadata != null) {
-      StringBuilder metadataText = new StringBuilder(20);
-      for (Map.Entry<ResultMetadataType,Object> entry : metadata.entrySet()) {
-        if (DISPLAYABLE_METADATA_TYPES.contains(entry.getKey())) {
-          metadataText.append(entry.getValue()).append('\n');
-        }
-      }
-      if (metadataText.length() > 0) {
-        metadataText.setLength(metadataText.length() - 1);
-        bean.setMeta(metadataText.toString());
-      }
-    }
     bean.setContents(result.getDisplayResult());
     showResultDialog(CaptureActivity.this, bean);
   }
@@ -329,14 +294,14 @@ public final class CaptureActivity extends AppCompatActivity {
 //      return;
 //    }
     try {
-      cameraManager.openDriver(Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
+      mCameraManager.openDriver(Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
-        mHelper = new CaptureActivityHelper(decodeFormats, characterSet, cameraManager);
+        mHelper = new CaptureActivityHelper(decodeFormats, characterSet, mCameraManager);
         mHelper.setListener(new CaptureActivityHelper.CaptureActivityHelperListener() {
           @Override
           public void onFoundPossibleResultPoint(ResultPoint point) {
-            getViewfinderView().addPossibleResultPoint(point);
+            viewfinderView.addPossibleResultPoint(point);
           }
 
           @Override
@@ -351,8 +316,9 @@ public final class CaptureActivity extends AppCompatActivity {
         });
       }
       decodeOrStoreSavedBitmap(null);
-    } catch (Exception ioe) {
-      Log.w(TAG, ioe);
+    } catch (Exception e) {
+      e.printStackTrace();
+      Log.w(TAG, e);
       showCameraExceptionDialog();
     }
   }
