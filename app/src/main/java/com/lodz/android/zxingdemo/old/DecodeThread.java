@@ -20,12 +20,10 @@ package com.lodz.android.zxingdemo.old;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.ResultPointCallback;
-import com.lodz.android.zxingdemo.main.decode.DecodeFormatManager;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -49,7 +47,6 @@ final class DecodeThread extends Thread {
   DecodeThread(CaptureActivityHelper helper,
                CameraManager manager,
                Collection<BarcodeFormat> decodeFormats,
-               String characterSet,
                ResultPointCallback resultPointCallback) {
 
     mCameraManager = manager;
@@ -57,26 +54,8 @@ final class DecodeThread extends Thread {
     handlerInitLatch = new CountDownLatch(1);
 
     hints = new EnumMap<>(DecodeHintType.class);
-
-    // The prefs can't change while the thread is running, so pick them up once here.
-    if (decodeFormats == null || decodeFormats.isEmpty()) {
-      decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
-      decodeFormats.addAll(DecodeFormatManager.getQR_CODE_FORMATS());//二维码
-      decodeFormats.addAll(DecodeFormatManager.getINDUSTRIAL_FORMATS());// 条形码，需要横屏识别
-
-      boolean isDefaultAdd = false;
-      if (isDefaultAdd){
-        decodeFormats.addAll(DecodeFormatManager.getPRODUCT_FORMATS());
-        decodeFormats.addAll(DecodeFormatManager.getDATA_MATRIX_FORMATS());
-        decodeFormats.addAll(DecodeFormatManager.getAZTEC_FORMATS());
-        decodeFormats.addAll(DecodeFormatManager.getPDF417_FORMATS());
-      }
-    }
     hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
 
-    if (characterSet != null) {
-      hints.put(DecodeHintType.CHARACTER_SET, characterSet);
-    }
     hints.put(DecodeHintType.NEED_RESULT_POINT_CALLBACK, resultPointCallback);
     mDecodeHelper = new DecodeHelper(mHelper, hints,mCameraManager );
     handlerInitLatch.countDown();

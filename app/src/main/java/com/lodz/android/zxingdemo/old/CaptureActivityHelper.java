@@ -49,8 +49,8 @@ public final class CaptureActivityHelper  {
     DONE
   }
 
-  CaptureActivityHelper(Collection<BarcodeFormat> decodeFormats, String characterSet, CameraManager cameraManager) {
-    decodeThread = new DecodeThread(this, cameraManager,decodeFormats, characterSet, new ResultPointCallback() {
+  CaptureActivityHelper(Collection<BarcodeFormat> decodeFormats,  CameraManager cameraManager) {
+    decodeThread = new DecodeThread(this, cameraManager,decodeFormats,  new ResultPointCallback() {
       @Override
       public void foundPossibleResultPoint(ResultPoint point) {
         if (mListener != null){

@@ -46,6 +46,7 @@ import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.utils.DateUtils;
 import com.lodz.android.zxingdemo.R;
+import com.lodz.android.zxingdemo.main.decode.DecodeFormatManager;
 import com.lodz.android.zxingdemo.main.media.BeepManager;
 import com.lodz.android.zxingdemo.main.result.ResultBean;
 import com.lodz.android.zxingdemo.main.result.ResultDialog;
@@ -53,6 +54,7 @@ import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 
 /**
  * This activity opens the camera and does the actual scanning on a background thread. It draws a
@@ -73,9 +75,7 @@ public final class CaptureActivity extends AppCompatActivity {
 
   private CameraManager mCameraManager;
   private CaptureActivityHelper mHelper;
-  private ViewfinderView viewfinderView;
-  private Collection<BarcodeFormat> decodeFormats;
-  private String characterSet;
+  private ViewfinderView mViewfinderView;
   private BeepManager beepManager;
 
   private SurfaceView mSurfaceView;
@@ -107,8 +107,8 @@ public final class CaptureActivity extends AppCompatActivity {
     // off screen.
     mCameraManager = new CameraManager(getApplication());
 
-    viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
-    viewfinderView.setCameraManager(mCameraManager);
+    mViewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
+    mViewfinderView.setCameraManager(mCameraManager);
 
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
@@ -120,11 +120,6 @@ public final class CaptureActivity extends AppCompatActivity {
 
 
     resetStatusView();
-
-
-
-    decodeFormats = null;
-    characterSet = null;
 
     mSurfaceView = (SurfaceView) findViewById(R.id.preview_view);
     mSurfaceView.getHolder().addCallback(mCallback);
@@ -261,7 +256,7 @@ public final class CaptureActivity extends AppCompatActivity {
   // Put up our own UI for how to handle the decoded contents.
   private void handleDecodeInternally(Result rawResult, ParsedResult result, Bitmap barcode) {
 
-    viewfinderView.setVisibility(View.GONE);
+    mViewfinderView.setVisibility(View.GONE);
 
     ResultBean bean = new ResultBean();
     bean.setBarcodeImg(barcode);
@@ -297,11 +292,11 @@ public final class CaptureActivity extends AppCompatActivity {
       mCameraManager.openDriver(Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
-        mHelper = new CaptureActivityHelper(decodeFormats, characterSet, mCameraManager);
+        mHelper = new CaptureActivityHelper(createBarcodeFormat(), mCameraManager);
         mHelper.setListener(new CaptureActivityHelper.CaptureActivityHelperListener() {
           @Override
           public void onFoundPossibleResultPoint(ResultPoint point) {
-            viewfinderView.addPossibleResultPoint(point);
+            mViewfinderView.addPossibleResultPoint(point);
           }
 
           @Override
@@ -321,6 +316,19 @@ public final class CaptureActivity extends AppCompatActivity {
       Log.w(TAG, e);
       showCameraExceptionDialog();
     }
+  }
+
+  private Collection<BarcodeFormat> createBarcodeFormat() {
+    Collection<BarcodeFormat> decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
+    decodeFormats.addAll(DecodeFormatManager.getQR_CODE_FORMATS());//二维码
+    decodeFormats.addAll(DecodeFormatManager.getINDUSTRIAL_FORMATS());// 条形码，需要横屏识别
+
+    // 其余格式，添加越多识别速度越慢
+//    decodeFormats.addAll(DecodeFormatManager.getPRODUCT_FORMATS());
+//    decodeFormats.addAll(DecodeFormatManager.getDATA_MATRIX_FORMATS());
+//    decodeFormats.addAll(DecodeFormatManager.getAZTEC_FORMATS());
+//    decodeFormats.addAll(DecodeFormatManager.getPDF417_FORMATS());
+    return decodeFormats;
   }
 
   private void showCameraExceptionDialog() {
@@ -352,10 +360,10 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   private void resetStatusView() {
-    viewfinderView.setVisibility(View.VISIBLE);
+    mViewfinderView.setVisibility(View.VISIBLE);
   }
 
   public void drawViewfinder() {
-    viewfinderView.drawViewfinder();
+    mViewfinderView.drawViewfinder();
   }
 }
