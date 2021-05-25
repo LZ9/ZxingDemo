@@ -30,7 +30,7 @@ class BeepManager(val context: Context, val isVibrate: Boolean = false) {
         }
     }
 
-    fun close(){
+    fun release(){
         mMediaPlayer?.stop()
         mMediaPlayer?.release()
         mMediaPlayer = null

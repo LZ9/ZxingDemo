@@ -20,15 +20,12 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -36,8 +33,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
@@ -76,7 +75,7 @@ public final class CaptureActivity extends AppCompatActivity {
   private CameraManager mCameraManager;
   private CaptureActivityHelper mHelper;
   private ViewfinderView mViewfinderView;
-  private BeepManager beepManager;
+  private BeepManager mBeepManager;
 
   private SurfaceView mSurfaceView;
 
@@ -88,7 +87,7 @@ public final class CaptureActivity extends AppCompatActivity {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.activity_capture);
 
-    beepManager = new BeepManager(this, true);
+    mBeepManager = new BeepManager(this, true);
 
     Button flashBtn = findViewById(R.id.flash_btn);
     flashBtn.setOnClickListener(new View.OnClickListener() {
@@ -113,7 +112,7 @@ public final class CaptureActivity extends AppCompatActivity {
 //    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 //
 //    if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_AUTO_ORIENTATION, true)) {
-    setRequestedOrientation(getCurrentOrientation());// 不使用自动旋转
+//    setRequestedOrientation(getCurrentOrientation());// 不使用自动旋转
 //    } else {
 //      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
 //    }
@@ -125,27 +124,26 @@ public final class CaptureActivity extends AppCompatActivity {
     mSurfaceView.getHolder().addCallback(mCallback);
   }
 
-
-  private int getCurrentOrientation() {
-    int rotation = getWindowManager().getDefaultDisplay().getRotation();
-    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      switch (rotation) {
-        case Surface.ROTATION_0:
-        case Surface.ROTATION_90:
-          return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-        default:
-          return ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-      }
-    } else {
-      switch (rotation) {
-        case Surface.ROTATION_0:
-        case Surface.ROTATION_270:
-          return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-        default:
-          return ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-      }
-    }
-  }
+//  private int getCurrentOrientation() {
+//    int rotation = getWindowManager().getDefaultDisplay().getRotation();
+//    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//      switch (rotation) {
+//        case Surface.ROTATION_0:
+//        case Surface.ROTATION_90:
+//          return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+//        default:
+//          return ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+//      }
+//    } else {
+//      switch (rotation) {
+//        case Surface.ROTATION_0:
+//        case Surface.ROTATION_270:
+//          return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+//        default:
+//          return ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+//      }
+//    }
+//  }
 
   @Override
   public void finish() {
@@ -153,7 +151,7 @@ public final class CaptureActivity extends AppCompatActivity {
       mHelper.quitSynchronously();
       mHelper = null;
     }
-    beepManager.close();
+    mBeepManager.release();
     mCameraManager.closeDriver();
     //historyManager = null; // Keep for onActivityResult
     mSurfaceView.getHolder().removeCallback(mCallback);
@@ -198,63 +196,18 @@ public final class CaptureActivity extends AppCompatActivity {
    * @param scaleFactor amount by which thumbnail was scaled
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
-  public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
-    ParsedResult result = ResultParser.parseResult(rawResult);
+  private void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
 
+
+    // 是否动态识别
     boolean fromLiveScan = barcode != null;
     if (fromLiveScan) {
       // Then not from history, so beep/vibrate and we have an image to draw on
-      beepManager.play();
-      drawResultPoints(barcode, scaleFactor, rawResult);
+      mBeepManager.play();
+      drawResultPoints(barcode, scaleFactor, rawResult, R.color.result_points);
     }
-    handleDecodeInternally(rawResult, result, barcode);
-  }
 
-  /**
-   * Superimpose a line for 1D or dots for 2D to highlight the key features of the barcode.
-   *
-   * @param barcode   A bitmap of the captured image.
-   * @param scaleFactor amount by which thumbnail was scaled
-   * @param rawResult The decoded results which contains the points to draw.
-   */
-  private void drawResultPoints(Bitmap barcode, float scaleFactor, Result rawResult) {
-    ResultPoint[] points = rawResult.getResultPoints();
-    if (points != null && points.length > 0) {
-      Canvas canvas = new Canvas(barcode);
-      Paint paint = new Paint();
-      paint.setColor(getResources().getColor(R.color.result_points));
-      if (points.length == 2) {
-        paint.setStrokeWidth(4.0f);
-        drawLine(canvas, paint, points[0], points[1], scaleFactor);
-      } else if (points.length == 4 &&
-                 (rawResult.getBarcodeFormat() == BarcodeFormat.UPC_A ||
-                  rawResult.getBarcodeFormat() == BarcodeFormat.EAN_13)) {
-        // Hacky special case -- draw two lines, for the barcode and metadata
-        drawLine(canvas, paint, points[0], points[1], scaleFactor);
-        drawLine(canvas, paint, points[2], points[3], scaleFactor);
-      } else {
-        paint.setStrokeWidth(10.0f);
-        for (ResultPoint point : points) {
-          if (point != null) {
-            canvas.drawPoint(scaleFactor * point.getX(), scaleFactor * point.getY(), paint);
-          }
-        }
-      }
-    }
-  }
-
-  private static void drawLine(Canvas canvas, Paint paint, ResultPoint a, ResultPoint b, float scaleFactor) {
-    if (a != null && b != null) {
-      canvas.drawLine(scaleFactor * a.getX(), 
-                      scaleFactor * a.getY(), 
-                      scaleFactor * b.getX(), 
-                      scaleFactor * b.getY(), 
-                      paint);
-    }
-  }
-
-  // Put up our own UI for how to handle the decoded contents.
-  private void handleDecodeInternally(Result rawResult, ParsedResult result, Bitmap barcode) {
+    ParsedResult result = ResultParser.parseResult(rawResult);
 
     mViewfinderView.setVisibility(View.GONE);
 
@@ -263,9 +216,55 @@ public final class CaptureActivity extends AppCompatActivity {
     bean.setFormat(rawResult.getBarcodeFormat().toString());
     bean.setType(result.getType().toString());
     bean.setTime(DateUtils.getFormatString(DateUtils.TYPE_2, new Date(rawResult.getTimestamp())));
-
     bean.setContents(result.getDisplayResult());
+
     showResultDialog(CaptureActivity.this, bean);
+  }
+
+  /**
+   * 动态识别的图片绘制识别点
+   * Superimpose a line for 1D or dots for 2D to highlight the key features of the barcode.
+   *
+   * @param barcode   A bitmap of the captured image.
+   * @param scaleFactor amount by which thumbnail was scaled
+   * @param rawResult The decoded results which contains the points to draw.
+   */
+  private void drawResultPoints(Bitmap barcode, float scaleFactor, Result rawResult, @ColorRes int color) {
+    ResultPoint[] points = rawResult.getResultPoints();
+    if (points == null || points.length <= 0) {
+      return;
+    }
+    if (barcode == null) {
+      return;
+    }
+    Canvas canvas = new Canvas(barcode);
+    Paint paint = new Paint();
+    paint.setColor(ContextCompat.getColor(getContext(), color));
+    if (points.length == 2) {
+      paint.setStrokeWidth(4.0f);
+      drawLine(canvas, paint, points[0], points[1], scaleFactor);
+      return;
+    }
+
+    if (points.length == 4 && (rawResult.getBarcodeFormat() == BarcodeFormat.UPC_A || rawResult.getBarcodeFormat() == BarcodeFormat.EAN_13)) {
+      // Hacky special case -- draw two lines, for the barcode and metadata
+      drawLine(canvas, paint, points[0], points[1], scaleFactor);
+      drawLine(canvas, paint, points[2], points[3], scaleFactor);
+      return;
+    }
+
+    paint.setStrokeWidth(10.0f);
+    for (ResultPoint point : points) {
+      if (point != null) {
+        canvas.drawPoint(scaleFactor * point.getX(), scaleFactor * point.getY(), paint);
+      }
+    }
+  }
+
+  private void drawLine(Canvas canvas, Paint paint, ResultPoint a, ResultPoint b, float scaleFactor) {
+    if (a != null && b != null) {
+      canvas.drawLine(scaleFactor * a.getX(), scaleFactor * a.getY(), scaleFactor * b.getX(), scaleFactor * b.getY(), paint);
+    }
   }
 
   private void showResultDialog(Context context, ResultBean bean){
@@ -321,7 +320,7 @@ public final class CaptureActivity extends AppCompatActivity {
   private Collection<BarcodeFormat> createBarcodeFormat() {
     Collection<BarcodeFormat> decodeFormats = EnumSet.noneOf(BarcodeFormat.class);
     decodeFormats.addAll(DecodeFormatManager.getQR_CODE_FORMATS());//二维码
-    decodeFormats.addAll(DecodeFormatManager.getINDUSTRIAL_FORMATS());// 条形码，需要横屏识别
+//    decodeFormats.addAll(DecodeFormatManager.getINDUSTRIAL_FORMATS());// 条形码，需要横屏识别
 
     // 其余格式，添加越多识别速度越慢
 //    decodeFormats.addAll(DecodeFormatManager.getPRODUCT_FORMATS());
@@ -365,5 +364,9 @@ public final class CaptureActivity extends AppCompatActivity {
 
   public void drawViewfinder() {
     mViewfinderView.drawViewfinder();
+  }
+
+  private Context getContext(){
+    return this;
   }
 }
