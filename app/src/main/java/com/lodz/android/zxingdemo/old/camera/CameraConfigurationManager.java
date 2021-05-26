@@ -37,24 +37,22 @@ final class CameraConfigurationManager {
 
   private static final String TAG = "CameraConfiguration";
 
-  private final Context context;
-  private int cwNeededRotation;
+  private Context mContext;
   private int cwRotationFromDisplayToCamera;
   private Point screenResolution;
   private Point cameraResolution;
   private Point bestPreviewSize;
-  private Point previewSizeOnScreen;
 
   CameraConfigurationManager(Context context) {
-    this.context = context;
+    this.mContext = context;
   }
 
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  void initFromCameraParameters(CameraBean camera) {
-    Camera.Parameters parameters = camera.getCamera().getParameters();
-    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+  public void initFromCameraParameters(CameraBean cameraBean) {
+    Camera.Parameters parameters = cameraBean.getCamera().getParameters();
+    WindowManager manager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
     Display display = manager.getDefaultDisplay();
 
     int displayRotation = display.getRotation();
@@ -82,25 +80,17 @@ final class CameraConfigurationManager {
     }
     Log.i(TAG, "Display at: " + cwRotationFromNaturalToDisplay);
 
-    int cwRotationFromNaturalToCamera = camera.getOrientation();
+    int cwRotationFromNaturalToCamera = cameraBean.getOrientation();
     Log.i(TAG, "Camera at: " + cwRotationFromNaturalToCamera);
 
     // Still not 100% sure about this. But acts like we need to flip this:
-    if (camera.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+    if (cameraBean.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
       cwRotationFromNaturalToCamera = (360 - cwRotationFromNaturalToCamera) % 360;
       Log.i(TAG, "Front camera overriden to: " + cwRotationFromNaturalToCamera);
     }
 
-    cwRotationFromDisplayToCamera =
-        (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
+    cwRotationFromDisplayToCamera = (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
     Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
-    if (camera.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-      Log.i(TAG, "Compensating rotation for front camera");
-      cwNeededRotation = (360 - cwRotationFromDisplayToCamera) % 360;
-    } else {
-      cwNeededRotation = cwRotationFromDisplayToCamera;
-    }
-    Log.i(TAG, "Clockwise rotation from display to camera: " + cwNeededRotation);
 
     Point theScreenResolution = new Point();
     display.getSize(theScreenResolution);
@@ -110,19 +100,9 @@ final class CameraConfigurationManager {
     Log.i(TAG, "Camera resolution: " + cameraResolution);
     bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
     Log.i(TAG, "Best available preview size: " + bestPreviewSize);
-
-    boolean isScreenPortrait = screenResolution.x < screenResolution.y;
-    boolean isPreviewSizePortrait = bestPreviewSize.x < bestPreviewSize.y;
-
-    if (isScreenPortrait == isPreviewSizePortrait) {
-      previewSizeOnScreen = bestPreviewSize;
-    } else {
-      previewSizeOnScreen = new Point(bestPreviewSize.y, bestPreviewSize.x);
-    }
-    Log.i(TAG, "Preview size on screen: " + previewSizeOnScreen);
   }
 
-  void setDesiredCameraParameters(CameraBean camera, boolean safeMode) {
+  public void setDesiredCameraParameters(CameraBean camera, boolean safeMode) {
 
     Camera theCamera = camera.getCamera();
     Camera.Parameters parameters = theCamera.getParameters();
@@ -139,15 +119,7 @@ final class CameraConfigurationManager {
     }
 
 
-    initializeTorch(parameters, safeMode);
-
-    // 是否禁用连续对焦使用标准对焦
-    boolean isDisableContinuousFocus = false;
-    CameraConfigurationUtils.setFocus(
-        parameters,
-            true,//自动对焦
-            isDisableContinuousFocus,
-            safeMode);
+    CameraConfigurationUtils.setFocus(parameters, true, false, safeMode);
 
     if (!safeMode) {
   //        CameraConfigurationUtils.setInvertColor(parameters);// 配置使用反色扫描
@@ -181,55 +153,12 @@ final class CameraConfigurationManager {
     }
   }
 
-  Point getBestPreviewSize() {
-    return bestPreviewSize;
-  }
-
-  Point getPreviewSizeOnScreen() {
-    return previewSizeOnScreen;
-  }
-
   Point getCameraResolution() {
     return cameraResolution;
   }
 
   Point getScreenResolution() {
     return screenResolution;
-  }
-
-  int getCWNeededRotation() {
-    return cwNeededRotation;
-  }
-
-  boolean getTorchState(Camera camera) {
-    if (camera != null) {
-      Camera.Parameters parameters = camera.getParameters();
-      if (parameters != null) {
-        String flashMode = parameters.getFlashMode();
-        return
-            Camera.Parameters.FLASH_MODE_ON.equals(flashMode) ||
-            Camera.Parameters.FLASH_MODE_TORCH.equals(flashMode);
-      }
-    }
-    return false;
-  }
-
-  void setTorch(Camera camera, boolean newSetting) {
-    Camera.Parameters parameters = camera.getParameters();
-    doSetTorch(parameters, newSetting, false);
-    camera.setParameters(parameters);
-  }
-
-  private void initializeTorch(Camera.Parameters parameters,  boolean safeMode) {
-    boolean currentSetting = false;
-    doSetTorch(parameters, currentSetting, safeMode);
-  }
-
-  private void doSetTorch(Camera.Parameters parameters, boolean newSetting, boolean safeMode) {
-    CameraConfigurationUtils.setTorch(parameters, newSetting);
-//    if (!safeMode && !prefs.getBoolean(PreferencesActivity.KEY_DISABLE_EXPOSURE, true)) {
-//      CameraConfigurationUtils.setBestExposure(parameters, newSetting);//配置曝光
-//    }
   }
 
 }

@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.google.zxing.PlanarYUVLuminanceSource;
+import com.google.zxing.client.android.camera.CameraConfigurationUtils;
 import com.lodz.android.zxingdemo.old.DecodeHelper;
 import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
 import com.lodz.android.zxingdemo.old.camera.open.OpenCameraInterface;
@@ -156,21 +157,6 @@ public final class CameraManager {
       previewCallback.setDecodeHelper(null);
       previewing = false;
     }
-  }
-
-  /**
-   *
-   * @param newSetting if {@code true}, light should be turned on if currently off. And vice versa.
-   */
-  public synchronized void setTorch(boolean newSetting) {
-    CameraBean theCamera = mCameraBean;
-    if (theCamera != null && newSetting != configManager.getTorchState(theCamera.getCamera())) {
-      configManager.setTorch(theCamera.getCamera(), newSetting);
-    }
-  }
-
-  public synchronized boolean getTorchState() {
-    return configManager.getTorchState(mCameraBean.getCamera());
   }
 
   /**
@@ -320,6 +306,32 @@ public final class CameraManager {
     }
     // Go ahead and assume it's YUV rather than die.
     return new PlanarYUVLuminanceSource(data, width, height, rect.left, rect.top, rect.width(), rect.height(), false);
+  }
+
+  /** 获取闪光灯开启状态 */
+  public synchronized boolean getTorchState() {
+    if (mCameraBean == null || mCameraBean.getCamera() == null) {
+      return false;
+    }
+    Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
+    if (parameters == null) {
+      return false;
+    }
+    String flashMode = parameters.getFlashMode();
+    return Camera.Parameters.FLASH_MODE_ON.equals(flashMode) || Camera.Parameters.FLASH_MODE_TORCH.equals(flashMode);
+  }
+
+  /**
+   * 设置闪光灯是否开启
+   * @param isOpen 是否开启闪光灯
+   */
+  public synchronized void setTorch(boolean isOpen) {
+    if (mCameraBean == null || mCameraBean.getCamera() == null) {
+      return;
+    }
+    Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
+    CameraConfigurationUtils.setTorch(parameters, isOpen);
+    mCameraBean.getCamera().setParameters(parameters);
   }
 
 }
