@@ -62,8 +62,8 @@ public final class CameraManager {
    */
   private final PreviewCallback previewCallback;
 
-  public CameraManager(Context context) {
-    this.configManager = new CameraConfigurationManager(context);
+  public CameraManager() {
+    this.configManager = new CameraConfigurationManager();
     previewCallback = new PreviewCallback(configManager);
   }
 
@@ -73,7 +73,7 @@ public final class CameraManager {
    * @param holder The surface object which the camera will draw preview frames into.
    * @throws IOException Indicates the camera driver failed to open.
    */
-  public synchronized void openDriver(int cameraId, SurfaceHolder holder) throws IOException {
+  public synchronized void openDriver(Context context, int cameraId, SurfaceHolder holder) throws IOException {
     CameraBean theCamera = mCameraBean;
     if (theCamera == null) {
       theCamera = OpenCameraInterface.open(cameraId);
@@ -85,7 +85,7 @@ public final class CameraManager {
 
     if (!initialized) {
       initialized = true;
-      configManager.initFromCameraParameters(theCamera);
+      configManager.initFromCameraParameters(context, theCamera);
       if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
         setManualFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
         requestedFramingRectWidth = 0;
@@ -97,7 +97,7 @@ public final class CameraManager {
     Camera.Parameters parameters = cameraObject.getParameters();
     String parametersFlattened = parameters == null ? null : parameters.flatten(); // Save these, temporarily
     try {
-      configManager.setDesiredCameraParameters(theCamera, false);
+      configManager.setDesiredCameraParameters(theCamera);
     } catch (RuntimeException re) {
       // Driver failed
       Log.w(TAG, "Camera rejected parameters. Setting only minimal safe-mode parameters");
@@ -108,7 +108,7 @@ public final class CameraManager {
         parameters.unflatten(parametersFlattened);
         try {
           cameraObject.setParameters(parameters);
-          configManager.setDesiredCameraParameters(theCamera, true);
+          configManager.setDesiredCameraParameters(theCamera);
         } catch (RuntimeException re2) {
           // Well, darn. Give up
           Log.w(TAG, "Camera rejected even safe-mode parameters! No configuration");

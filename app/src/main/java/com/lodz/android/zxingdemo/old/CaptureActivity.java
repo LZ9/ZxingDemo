@@ -104,7 +104,7 @@ public final class CaptureActivity extends AppCompatActivity {
     // want to open the camera driver and measure the screen size if we're going to show the help on
     // first launch. That led to bugs where the scanning rectangle was the wrong size and partially
     // off screen.
-    mCameraManager = new CameraManager(getApplication());
+    mCameraManager = new CameraManager();
 
     mViewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     mViewfinderView.setCameraManager(mCameraManager);
@@ -288,7 +288,7 @@ public final class CaptureActivity extends AppCompatActivity {
 //      return;
 //    }
     try {
-      mCameraManager.openDriver(Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
+      mCameraManager.openDriver(getContext(), Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
         mHelper = new CaptureActivityHelper(createBarcodeFormat(), mCameraManager);

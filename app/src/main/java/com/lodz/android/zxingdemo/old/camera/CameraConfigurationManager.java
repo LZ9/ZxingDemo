@@ -37,22 +37,17 @@ final class CameraConfigurationManager {
 
   private static final String TAG = "CameraConfiguration";
 
-  private Context mContext;
   private int cwRotationFromDisplayToCamera;
   private Point screenResolution;
   private Point cameraResolution;
   private Point bestPreviewSize;
 
-  CameraConfigurationManager(Context context) {
-    this.mContext = context;
-  }
-
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  public void initFromCameraParameters(CameraBean cameraBean) {
+  public void initFromCameraParameters(Context context, CameraBean cameraBean) {
     Camera.Parameters parameters = cameraBean.getCamera().getParameters();
-    WindowManager manager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     Display display = manager.getDefaultDisplay();
 
     int displayRotation = display.getRotation();
@@ -102,7 +97,7 @@ final class CameraConfigurationManager {
     Log.i(TAG, "Best available preview size: " + bestPreviewSize);
   }
 
-  public void setDesiredCameraParameters(CameraBean camera, boolean safeMode) {
+  public void setDesiredCameraParameters(CameraBean camera) {
 
     Camera theCamera = camera.getCamera();
     Camera.Parameters parameters = theCamera.getParameters();
@@ -114,28 +109,8 @@ final class CameraConfigurationManager {
 
     Log.i(TAG, "Initial camera parameters: " + parameters.flatten());
 
-    if (safeMode) {
-      Log.w(TAG, "In camera config safe mode -- most settings will not be honored");
-    }
-
-
-    CameraConfigurationUtils.setFocus(parameters, true, false, safeMode);
-
-    if (!safeMode) {
-  //        CameraConfigurationUtils.setInvertColor(parameters);// 配置使用反色扫描
-
-  //        CameraConfigurationUtils.setBarcodeSceneMode(parameters);// 配置进行条形码场景匹配
-
-  //        // 配置使用距离测量
-  //        CameraConfigurationUtils.setVideoStabilization(parameters);
-  //        CameraConfigurationUtils.setFocusArea(parameters);
-  //        CameraConfigurationUtils.setMetering(parameters);
-
-      //SetRecordingHint to true also a workaround for low framerate on Nexus 4
-      //https://stackoverflow.com/questions/14131900/extreme-camera-lag-on-nexus-4
-      parameters.setRecordingHint(true);
-
-    }
+    CameraConfigurationUtils.setFocus(parameters, true, false, false);
+    parameters.setRecordingHint(true);
 
     parameters.setPreviewSize(bestPreviewSize.x, bestPreviewSize.y);
 
