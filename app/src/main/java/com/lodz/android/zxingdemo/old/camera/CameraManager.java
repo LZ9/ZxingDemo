@@ -21,7 +21,10 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.WindowManager;
 
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
@@ -47,7 +50,7 @@ public final class CameraManager {
   private static final int MAX_FRAME_WIDTH = 1200; // = 5/8 * 1920
   private static final int MAX_FRAME_HEIGHT = 675; // = 5/8 * 1080
 
-  private final CameraConfigurationManager configManager;
+  /** 相机数据 */
   private CameraBean mCameraBean;
   private Rect framingRect;
   private Rect framingRectInPreview;
@@ -62,8 +65,7 @@ public final class CameraManager {
   private final PreviewCallback previewCallback;
 
   public CameraManager() {
-    this.configManager = new CameraConfigurationManager();
-    previewCallback = new PreviewCallback(configManager);
+    previewCallback = new PreviewCallback();
   }
 
   /**
@@ -84,7 +86,7 @@ public final class CameraManager {
 
     if (!initialized) {
       initialized = true;
-      configManager.initFromCameraParameters(context, theCamera);
+      initFromCameraParameters(context, theCamera);
       if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
         setManualFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
         requestedFramingRectWidth = 0;
@@ -96,7 +98,7 @@ public final class CameraManager {
     Camera.Parameters parameters = cameraObject.getParameters();
     String parametersFlattened = parameters == null ? null : parameters.flatten(); // Save these, temporarily
     try {
-      configManager.setDesiredCameraParameters(theCamera);
+      setDesiredCameraParameters(theCamera);
     } catch (RuntimeException re) {
       // Driver failed
       Log.w(TAG, "Camera rejected parameters. Setting only minimal safe-mode parameters");
@@ -107,7 +109,7 @@ public final class CameraManager {
         parameters.unflatten(parametersFlattened);
         try {
           cameraObject.setParameters(parameters);
-          configManager.setDesiredCameraParameters(theCamera);
+          setDesiredCameraParameters(theCamera);
         } catch (RuntimeException re2) {
           // Well, darn. Give up
           Log.w(TAG, "Camera rejected even safe-mode parameters! No configuration");
@@ -115,7 +117,7 @@ public final class CameraManager {
       }
     }
     cameraObject.setPreviewDisplay(holder);
-
+    previewCallback.setCameraResolution(cameraResolution);
   }
 
   /**
@@ -198,7 +200,7 @@ public final class CameraManager {
       if (mCameraBean == null) {
         return null;
       }
-      Point screenResolution = configManager.getScreenResolution();
+      Point screenResolution = getScreenResolution();
       if (screenResolution == null) {
         // Called early, before init even finished
         return null;
@@ -235,8 +237,8 @@ public final class CameraManager {
         return null;
       }
       Rect rect = new Rect(framingRect);
-      Point cameraResolution = configManager.getCameraResolution();
-      Point screenResolution = configManager.getScreenResolution();
+      Point cameraResolution = getCameraResolution();
+      Point screenResolution = getScreenResolution();
       if (cameraResolution == null || screenResolution == null) {
         // Called early, before init even finished
         return null;
@@ -269,7 +271,7 @@ public final class CameraManager {
    */
   public synchronized void setManualFramingRect(int width, int height) {
     if (initialized) {
-      Point screenResolution = configManager.getScreenResolution();
+      Point screenResolution = getScreenResolution();
       if (width > screenResolution.x) {
         width = screenResolution.x;
       }
@@ -302,7 +304,7 @@ public final class CameraManager {
       return null;
     }
     // 如果竖屏进行数据翻转
-    Point screenResolution = configManager.getScreenResolution();
+    Point screenResolution = getScreenResolution();
     if (screenResolution.x < screenResolution.y) {
 
       byte[] rotatedData = new byte[data.length];
@@ -345,6 +347,109 @@ public final class CameraManager {
     Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
     CameraConfigurationUtils.setTorch(parameters, isOpen);
     mCameraBean.getCamera().setParameters(parameters);
+  }
+
+
+
+
+
+  private int cwRotationFromDisplayToCamera;
+  private Point screenResolution;
+  private Point cameraResolution;
+  private Point bestPreviewSize;
+
+  /**
+   * Reads, one time, values from the camera that are needed by the app.
+   */
+  public void initFromCameraParameters(Context context, CameraBean cameraBean) {
+    Camera.Parameters parameters = cameraBean.getCamera().getParameters();
+    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    Display display = manager.getDefaultDisplay();
+
+    int displayRotation = display.getRotation();
+    int cwRotationFromNaturalToDisplay;
+    switch (displayRotation) {
+      case Surface.ROTATION_0:
+        cwRotationFromNaturalToDisplay = 0;
+        break;
+      case Surface.ROTATION_90:
+        cwRotationFromNaturalToDisplay = 90;
+        break;
+      case Surface.ROTATION_180:
+        cwRotationFromNaturalToDisplay = 180;
+        break;
+      case Surface.ROTATION_270:
+        cwRotationFromNaturalToDisplay = 270;
+        break;
+      default:
+        // Have seen this return incorrect values like -90
+        if (displayRotation % 90 == 0) {
+          cwRotationFromNaturalToDisplay = (360 + displayRotation) % 360;
+        } else {
+          throw new IllegalArgumentException("Bad rotation: " + displayRotation);
+        }
+    }
+    Log.i(TAG, "Display at: " + cwRotationFromNaturalToDisplay);
+
+    int cwRotationFromNaturalToCamera = cameraBean.getCameraInfo().orientation;
+    Log.i(TAG, "Camera at: " + cwRotationFromNaturalToCamera);
+
+    // Still not 100% sure about this. But acts like we need to flip this:
+    if (cameraBean.getCameraInfo().facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+      cwRotationFromNaturalToCamera = (360 - cwRotationFromNaturalToCamera) % 360;
+      Log.i(TAG, "Front camera overriden to: " + cwRotationFromNaturalToCamera);
+    }
+
+    cwRotationFromDisplayToCamera = (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
+    Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
+
+    Point theScreenResolution = new Point();
+    display.getSize(theScreenResolution);
+    screenResolution = theScreenResolution;
+    Log.i(TAG, "Screen resolution in current orientation: " + screenResolution);
+    cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+    Log.i(TAG, "Camera resolution: " + cameraResolution);
+    bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+    Log.i(TAG, "Best available preview size: " + bestPreviewSize);
+  }
+
+  public void setDesiredCameraParameters(CameraBean camera) {
+
+    Camera theCamera = camera.getCamera();
+    Camera.Parameters parameters = theCamera.getParameters();
+
+    if (parameters == null) {
+      Log.w(TAG, "Device error: no camera parameters are available. Proceeding without configuration.");
+      return;
+    }
+
+    Log.i(TAG, "Initial camera parameters: " + parameters.flatten());
+
+    CameraConfigurationUtils.setFocus(parameters, true, false, false);
+    parameters.setRecordingHint(true);
+
+    parameters.setPreviewSize(bestPreviewSize.x, bestPreviewSize.y);
+
+    theCamera.setParameters(parameters);
+
+    theCamera.setDisplayOrientation(cwRotationFromDisplayToCamera);
+
+    Camera.Parameters afterParameters = theCamera.getParameters();
+    Camera.Size afterSize = afterParameters.getPreviewSize();
+    if (afterSize != null && (bestPreviewSize.x != afterSize.width || bestPreviewSize.y != afterSize.height)) {
+      Log.w(TAG, "Camera said it supported preview size " + bestPreviewSize.x + 'x' + bestPreviewSize.y +
+              ", but after setting it, preview size is " + afterSize.width + 'x' + afterSize.height);
+      bestPreviewSize.x = afterSize.width;
+      bestPreviewSize.y = afterSize.height;
+    }
+  }
+
+  Point getCameraResolution() {
+    return cameraResolution;
+  }
+
+  Point getScreenResolution() {
+    return screenResolution;
   }
 
 }

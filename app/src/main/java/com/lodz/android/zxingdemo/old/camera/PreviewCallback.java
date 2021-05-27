@@ -22,24 +22,23 @@ import android.hardware.Camera;
 import com.lodz.android.zxingdemo.old.DecodeHelper;
 
 @SuppressWarnings("deprecation") // camera APIs
-final class PreviewCallback implements Camera.PreviewCallback {
+public class PreviewCallback implements Camera.PreviewCallback {
 
-  private final CameraConfigurationManager configManager;
+  private Point mCameraResolution;
   private DecodeHelper mDecodeHelper;
 
-  PreviewCallback(CameraConfigurationManager configManager) {
-    this.configManager = configManager;
+  public void setCameraResolution(Point cameraResolution) {
+    this.mCameraResolution = cameraResolution;
   }
 
-  void setDecodeHelper(DecodeHelper helper) {
-    mDecodeHelper = helper;
+  public void setDecodeHelper(DecodeHelper helper) {
+    this.mDecodeHelper = helper;
   }
 
   @Override
   public void onPreviewFrame(byte[] data, Camera camera) {
-    Point cameraResolution = configManager.getCameraResolution();
-    if (cameraResolution != null && mDecodeHelper != null) {
-      mDecodeHelper.decode(data, cameraResolution.x, cameraResolution.y);
+    if (mCameraResolution != null && mDecodeHelper != null) {
+      mDecodeHelper.decode(data, mCameraResolution.x, mCameraResolution.y);
     }
   }
 
