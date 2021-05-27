@@ -27,7 +27,6 @@ import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
 import com.lodz.android.zxingdemo.old.DecodeHelper;
 import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
-import com.lodz.android.zxingdemo.old.camera.open.OpenCameraInterface;
 
 import java.io.IOException;
 
@@ -76,7 +75,7 @@ public final class CameraManager {
   public synchronized void openDriver(Context context, int cameraId, SurfaceHolder holder) throws IOException {
     CameraBean theCamera = mCameraBean;
     if (theCamera == null) {
-      theCamera = OpenCameraInterface.open(cameraId);
+      theCamera = open(cameraId);
       if (theCamera == null) {
         throw new IOException("Camera.open() failed to return object from driver");
       }
@@ -119,8 +118,22 @@ public final class CameraManager {
 
   }
 
+  /**
+   * 打开摄像头
+   * @param cameraId 相机id
+   */
+  private CameraBean open(int cameraId) {
+    Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+    Camera.getCameraInfo(cameraId, cameraInfo);
+    Camera camera = Camera.open(cameraId);
+    if (camera != null) {
+      return new CameraBean(camera, cameraInfo);
+    }
+    return null;
+  }
+
   public synchronized boolean isOpen() {
-    return mCameraBean != null;
+    return mCameraBean != null && mCameraBean.getCamera() != null;
   }
 
   /**

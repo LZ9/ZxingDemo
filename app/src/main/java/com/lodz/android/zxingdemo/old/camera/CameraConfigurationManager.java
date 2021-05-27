@@ -75,11 +75,11 @@ final class CameraConfigurationManager {
     }
     Log.i(TAG, "Display at: " + cwRotationFromNaturalToDisplay);
 
-    int cwRotationFromNaturalToCamera = cameraBean.getOrientation();
+    int cwRotationFromNaturalToCamera = cameraBean.getCameraInfo().orientation;
     Log.i(TAG, "Camera at: " + cwRotationFromNaturalToCamera);
 
     // Still not 100% sure about this. But acts like we need to flip this:
-    if (cameraBean.getFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+    if (cameraBean.getCameraInfo().facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
       cwRotationFromNaturalToCamera = (360 - cwRotationFromNaturalToCamera) % 360;
       Log.i(TAG, "Front camera overriden to: " + cwRotationFromNaturalToCamera);
     }

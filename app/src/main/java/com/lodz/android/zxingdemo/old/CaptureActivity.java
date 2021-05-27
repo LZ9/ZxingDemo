@@ -44,6 +44,7 @@ import com.google.zxing.ResultPoint;
 import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.ResultParser;
 import com.lodz.android.corekt.utils.DateUtils;
+import com.lodz.android.corekt.utils.ToastUtils;
 import com.lodz.android.zxingdemo.R;
 import com.lodz.android.zxingdemo.main.decode.DecodeFormatManager;
 import com.lodz.android.zxingdemo.main.media.BeepManager;
@@ -281,7 +282,8 @@ public final class CaptureActivity extends AppCompatActivity {
 
   private void initCamera(SurfaceHolder surfaceHolder) {
     if (surfaceHolder == null) {
-      throw new IllegalStateException("No SurfaceHolder provided");
+      ToastUtils.showShort(getContext(), "No SurfaceHolder provided");
+      return;
     }
 //    if (cameraManager.isOpen()) {
 //      Log.w(TAG, "initCamera() while already open -- late SurfaceView callback?");

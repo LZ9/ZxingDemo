@@ -23,34 +23,23 @@ import android.hardware.Camera;
  */
 @SuppressWarnings("deprecation") // camera APIs
 public final class CameraBean {
-  
-  private final int index;
+
+  /** 相机 */
   private final Camera camera;
-  private final int facing;
-  private final int orientation;
-  
-  public CameraBean(int index, Camera camera, int facing, int orientation) {
-    this.index = index;
+  /** 相机信息 */
+  private Camera.CameraInfo mCameraInfo;
+
+  public CameraBean(Camera camera, Camera.CameraInfo cameraInfo) {
     this.camera = camera;
-    this.facing = facing;
-    this.orientation = orientation;
+    this.mCameraInfo = cameraInfo;
   }
 
   public Camera getCamera() {
     return camera;
   }
 
-  public int getFacing() {
-    return facing;
-  }
-
-  public int getOrientation() {
-    return orientation;
-  }
-
-  @Override
-  public String toString() {
-    return "Camera #" + index + " : " + facing + ',' + orientation;
+  public Camera.CameraInfo getCameraInfo() {
+    return mCameraInfo;
   }
 
 }
