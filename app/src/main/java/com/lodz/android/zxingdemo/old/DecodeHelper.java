@@ -94,8 +94,8 @@ public final class DecodeHelper {
     Bitmap bitmap = Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
-    bundle.putByteArray(DecodeThread.BARCODE_BITMAP, out.toByteArray());
-    bundle.putFloat(DecodeThread.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
+    bundle.putByteArray(CaptureActivityHelper.BARCODE_BITMAP, out.toByteArray());
+    bundle.putFloat(CaptureActivityHelper.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
   }
 
 }

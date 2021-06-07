@@ -21,6 +21,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.ResultPointCallback;
@@ -28,6 +29,9 @@ import com.lodz.android.corekt.utils.UiHandler;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * This class handles all the messaging which comprises the state machine for capture.
@@ -36,12 +40,16 @@ import java.util.Collection;
  */
 public final class CaptureActivityHelper  {
 
+  public static final String BARCODE_BITMAP = "barcode_bitmap";
+  public static final String BARCODE_SCALED_FACTOR = "barcode_scaled_factor";
+
   private CaptureActivityHelperListener mListener;
 
 //  private final CaptureActivity activity;
-  private final DecodeThread decodeThread;
   private State state;
   private final CameraManager cameraManager;
+
+  private DecodeHelper mDecodeHelper;
 
   private enum State {
     PREVIEW,
@@ -50,7 +58,10 @@ public final class CaptureActivityHelper  {
   }
 
   CaptureActivityHelper(Collection<BarcodeFormat> decodeFormats,  CameraManager cameraManager) {
-    decodeThread = new DecodeThread(this, cameraManager,decodeFormats,  new ResultPointCallback() {
+    CountDownLatch handlerInitLatch = new CountDownLatch(1);
+    Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
+    hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
+    hints.put(DecodeHintType.NEED_RESULT_POINT_CALLBACK, new ResultPointCallback() {
       @Override
       public void foundPossibleResultPoint(ResultPoint point) {
         if (mListener != null){
@@ -58,7 +69,9 @@ public final class CaptureActivityHelper  {
         }
       }
     });
-    decodeThread.start();
+    mDecodeHelper = new DecodeHelper(this, hints, cameraManager);
+    handlerInitLatch.countDown();
+
     state = State.SUCCESS;
 
     // Start ourselves capturing previews and decoding.
@@ -81,7 +94,7 @@ public final class CaptureActivityHelper  {
       @Override
       public void run() {
         state = State.PREVIEW;
-        cameraManager.requestPreviewFrame(decodeThread.getDecodeHelper());
+        cameraManager.requestPreviewFrame(mDecodeHelper);
       }
     });
   }
@@ -94,13 +107,13 @@ public final class CaptureActivityHelper  {
         Bitmap barcode = null;
         float scaleFactor = 1.0f;
         if (bundle != null) {
-          byte[] compressedBitmap = bundle.getByteArray(DecodeThread.BARCODE_BITMAP);
+          byte[] compressedBitmap = bundle.getByteArray(CaptureActivityHelper.BARCODE_BITMAP);
           if (compressedBitmap != null) {
             barcode = BitmapFactory.decodeByteArray(compressedBitmap, 0, compressedBitmap.length, null);
             // Mutable copy:
             barcode = barcode.copy(Bitmap.Config.ARGB_8888, true);
           }
-          scaleFactor = bundle.getFloat(DecodeThread.BARCODE_SCALED_FACTOR);
+          scaleFactor = bundle.getFloat(CaptureActivityHelper.BARCODE_SCALED_FACTOR);
         }
         if (mListener != null){
           mListener.decode(result, barcode, scaleFactor);
@@ -112,13 +125,7 @@ public final class CaptureActivityHelper  {
   public void quitSynchronously() {
     state = State.DONE;
     cameraManager.stopPreview();
-    decodeThread.getDecodeHelper().quit();
-    try {
-      // Wait at most half a second; should be enough time, and onPause() will timeout quickly
-      decodeThread.join(500L);
-    } catch (InterruptedException e) {
-      // continue
-    }
+    mDecodeHelper.quit();
 
     // Be absolutely sure we don't send any queued up messages
   }
@@ -126,7 +133,7 @@ public final class CaptureActivityHelper  {
   private void restartPreviewAndDecode() {
     if (state == State.SUCCESS) {
       state = State.PREVIEW;
-      cameraManager.requestPreviewFrame(decodeThread.getDecodeHelper());
+      cameraManager.requestPreviewFrame(mDecodeHelper);
       if (mListener != null){
         mListener.restartPreviewAndDecode();
       }
