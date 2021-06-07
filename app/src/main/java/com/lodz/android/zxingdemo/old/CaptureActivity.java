@@ -290,7 +290,7 @@ public final class CaptureActivity extends AppCompatActivity {
 //      return;
 //    }
     try {
-      mCameraManager.openDriver(getContext(), Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
+      mCameraManager.openCamera(getContext(), Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
         mHelper = new CaptureActivityHelper(createBarcodeFormat(), mCameraManager);

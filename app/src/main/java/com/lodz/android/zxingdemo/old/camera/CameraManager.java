@@ -54,19 +54,11 @@ public final class CameraManager {
   private CameraBean mCameraBean;
   private Rect framingRect;
   private Rect framingRectInPreview;
-  private boolean initialized;
+  /** 是否初始化 */
+  private boolean isInit;
   private boolean previewing;
   private int requestedFramingRectWidth;
   private int requestedFramingRectHeight;
-  /**
-   * Preview frames are delivered here, which we pass on to the registered handler. Make sure to
-   * clear the handler so it will only receive one message.
-   */
-  private final PreviewCallback previewCallback;
-
-  public CameraManager() {
-    previewCallback = new PreviewCallback();
-  }
 
   /**
    * Opens the camera driver and initializes the hardware parameters.
@@ -74,19 +66,41 @@ public final class CameraManager {
    * @param holder The surface object which the camera will draw preview frames into.
    * @throws IOException Indicates the camera driver failed to open.
    */
-  public synchronized void openDriver(Context context, int cameraId, SurfaceHolder holder) throws IOException {
-    CameraBean theCamera = mCameraBean;
-    if (theCamera == null) {
-      theCamera = open(cameraId);
-      if (theCamera == null) {
+  public synchronized void openCamera(Context context, int cameraId, SurfaceHolder holder) throws IOException {
+    if (mCameraBean == null) {
+      mCameraBean = createCameraBean(cameraId);
+      if (mCameraBean == null) {
+        // 相机开启失败
         throw new IOException("Camera.open() failed to return object from driver");
       }
-      mCameraBean = theCamera;
     }
 
-    if (!initialized) {
-      initialized = true;
-      initFromCameraParameters(context, theCamera);
+    if (!isInit) {
+      isInit = true;
+
+
+      WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+      Display display = manager.getDefaultDisplay();
+
+      int displayRotation = display.getRotation();
+
+
+      cwRotationFromDisplayToCamera = initFromCameraParameters(mCameraBean, displayRotation);
+      Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
+
+
+
+      Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
+      Point theScreenResolution = new Point();
+      display.getSize(theScreenResolution);
+      screenResolution = theScreenResolution;
+      Log.i(TAG, "Screen resolution in current orientation: " + screenResolution);
+      cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+      Log.i(TAG, "Camera resolution: " + cameraResolution);
+      bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+      Log.i(TAG, "Best available preview size: " + bestPreviewSize);
+
+
       if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
         setManualFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
         requestedFramingRectWidth = 0;
@@ -94,42 +108,29 @@ public final class CameraManager {
       }
     }
 
-    Camera cameraObject = theCamera.getCamera();
-    Camera.Parameters parameters = cameraObject.getParameters();
-    String parametersFlattened = parameters == null ? null : parameters.flatten(); // Save these, temporarily
+    Camera cameraObject = mCameraBean.getCamera();
     try {
-      setDesiredCameraParameters(theCamera);
-    } catch (RuntimeException re) {
-      // Driver failed
-      Log.w(TAG, "Camera rejected parameters. Setting only minimal safe-mode parameters");
-      Log.i(TAG, "Resetting to saved camera params: " + parametersFlattened);
-      // Reset:
-      if (parametersFlattened != null) {
-        parameters = cameraObject.getParameters();
-        parameters.unflatten(parametersFlattened);
-        try {
-          cameraObject.setParameters(parameters);
-          setDesiredCameraParameters(theCamera);
-        } catch (RuntimeException re2) {
-          // Well, darn. Give up
-          Log.w(TAG, "Camera rejected even safe-mode parameters! No configuration");
-        }
-      }
+      configCameraParameters(mCameraBean);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     cameraObject.setPreviewDisplay(holder);
-    previewCallback.setCameraResolution(cameraResolution);
   }
 
   /**
    * 打开摄像头
    * @param cameraId 相机id
    */
-  private CameraBean open(int cameraId) {
-    Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-    Camera.getCameraInfo(cameraId, cameraInfo);
-    Camera camera = Camera.open(cameraId);
-    if (camera != null) {
-      return new CameraBean(camera, cameraInfo);
+  private CameraBean createCameraBean(int cameraId) {
+    try {
+      Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+      Camera.getCameraInfo(cameraId, cameraInfo);
+      Camera camera = Camera.open(cameraId);
+      if (camera != null) {
+        return new CameraBean(camera, cameraInfo);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     return null;
   }
@@ -169,7 +170,6 @@ public final class CameraManager {
   public synchronized void stopPreview() {
     if (mCameraBean != null && previewing) {
       mCameraBean.getCamera().stopPreview();
-      previewCallback.setDecodeHelper(null);
       previewing = false;
     }
   }
@@ -183,8 +183,14 @@ public final class CameraManager {
   public synchronized void requestPreviewFrame(DecodeHelper decodeHelper) {
     CameraBean theCamera = mCameraBean;
     if (theCamera != null && previewing) {
-      previewCallback.setDecodeHelper(decodeHelper);
-      theCamera.getCamera().setOneShotPreviewCallback(previewCallback);
+      theCamera.getCamera().setOneShotPreviewCallback(new Camera.PreviewCallback(){
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+          if (cameraResolution != null && decodeHelper != null) {
+            decodeHelper.decode(data, cameraResolution.x, cameraResolution.y);
+          }
+        }
+      });
     }
   }
 
@@ -270,7 +276,7 @@ public final class CameraManager {
    * @param height The height in pixels to scan.
    */
   public synchronized void setManualFramingRect(int width, int height) {
-    if (initialized) {
+    if (isInit) {
       Point screenResolution = getScreenResolution();
       if (width > screenResolution.x) {
         width = screenResolution.x;
@@ -361,12 +367,7 @@ public final class CameraManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  public void initFromCameraParameters(Context context, CameraBean cameraBean) {
-    Camera.Parameters parameters = cameraBean.getCamera().getParameters();
-    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    Display display = manager.getDefaultDisplay();
-
-    int displayRotation = display.getRotation();
+  private int  initFromCameraParameters(CameraBean cameraBean, int displayRotation) {
     int cwRotationFromNaturalToDisplay;
     switch (displayRotation) {
       case Surface.ROTATION_0:
@@ -399,24 +400,17 @@ public final class CameraManager {
       cwRotationFromNaturalToCamera = (360 - cwRotationFromNaturalToCamera) % 360;
       Log.i(TAG, "Front camera overriden to: " + cwRotationFromNaturalToCamera);
     }
-
-    cwRotationFromDisplayToCamera = (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
-    Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
-
-    Point theScreenResolution = new Point();
-    display.getSize(theScreenResolution);
-    screenResolution = theScreenResolution;
-    Log.i(TAG, "Screen resolution in current orientation: " + screenResolution);
-    cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
-    Log.i(TAG, "Camera resolution: " + cameraResolution);
-    bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
-    Log.i(TAG, "Best available preview size: " + bestPreviewSize);
+    return (360 + cwRotationFromNaturalToCamera - cwRotationFromNaturalToDisplay) % 360;
   }
 
-  public void setDesiredCameraParameters(CameraBean camera) {
+  /**
+   * 配置相机参数
+   * @param cameraBean 相机数据
+   */
+  private void configCameraParameters(CameraBean cameraBean) {
 
-    Camera theCamera = camera.getCamera();
-    Camera.Parameters parameters = theCamera.getParameters();
+    Camera camera = cameraBean.getCamera();
+    Camera.Parameters parameters = camera.getParameters();
 
     if (parameters == null) {
       Log.w(TAG, "Device error: no camera parameters are available. Proceeding without configuration.");
@@ -430,11 +424,11 @@ public final class CameraManager {
 
     parameters.setPreviewSize(bestPreviewSize.x, bestPreviewSize.y);
 
-    theCamera.setParameters(parameters);
+    camera.setParameters(parameters);
 
-    theCamera.setDisplayOrientation(cwRotationFromDisplayToCamera);
+    camera.setDisplayOrientation(cwRotationFromDisplayToCamera);
 
-    Camera.Parameters afterParameters = theCamera.getParameters();
+    Camera.Parameters afterParameters = camera.getParameters();
     Camera.Size afterSize = afterParameters.getPreviewSize();
     if (afterSize != null && (bestPreviewSize.x != afterSize.width || bestPreviewSize.y != afterSize.height)) {
       Log.w(TAG, "Camera said it supported preview size " + bestPreviewSize.x + 'x' + bestPreviewSize.y +
@@ -444,11 +438,11 @@ public final class CameraManager {
     }
   }
 
-  Point getCameraResolution() {
+  private Point getCameraResolution() {
     return cameraResolution;
   }
 
-  Point getScreenResolution() {
+  private Point getScreenResolution() {
     return screenResolution;
   }
 

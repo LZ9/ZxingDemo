@@ -27,7 +27,7 @@ public final class CameraBean {
   /** 相机 */
   private final Camera camera;
   /** 相机信息 */
-  private Camera.CameraInfo mCameraInfo;
+  private final Camera.CameraInfo mCameraInfo;
 
   public CameraBean(Camera camera, Camera.CameraInfo cameraInfo) {
     this.camera = camera;
