@@ -18,7 +18,6 @@ package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Bundle;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
@@ -80,7 +79,7 @@ public final class CaptureHelper {
     restartPreviewAndDecode();
   }
 
-  public void restartPreview(long delayMS){
+  public void restartPreview(){
     UiHandler.post(new Runnable() {
       @Override
       public void run() {
@@ -99,21 +98,20 @@ public final class CaptureHelper {
     });
   }
 
-  public void decodeSucceeded(Result result, Bundle bundle) {
+  public void decodeSucceeded(Result result, byte[] bytes, float scale) {
     UiHandler.post(new Runnable() {
       @Override
       public void run() {
         state = State.SUCCESS;
         Bitmap barcode = null;
         float scaleFactor = 1.0f;
-        if (bundle != null) {
-          byte[] compressedBitmap = bundle.getByteArray(CaptureHelper.BARCODE_BITMAP);
-          if (compressedBitmap != null) {
-            barcode = BitmapFactory.decodeByteArray(compressedBitmap, 0, compressedBitmap.length, null);
-            // Mutable copy:
-            barcode = barcode.copy(Bitmap.Config.ARGB_8888, true);
+        if (bytes != null) {
+          barcode = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+          // Mutable copy:
+          barcode = barcode.copy(Bitmap.Config.ARGB_8888, true);
+          if (scale != -1f){
+            scaleFactor = scale;
           }
-          scaleFactor = bundle.getFloat(CaptureHelper.BARCODE_SCALED_FACTOR);
         }
         if (mListener != null){
           mListener.decode(result, barcode, scaleFactor);
@@ -125,7 +123,7 @@ public final class CaptureHelper {
   public void quitSynchronously() {
     state = State.DONE;
     cameraManager.stopPreview();
-    mDecodeHelper.quit();
+    mDecodeHelper.quitDecode();
 
     // Be absolutely sure we don't send any queued up messages
   }

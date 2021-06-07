@@ -17,13 +17,11 @@
 package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
-import android.os.Bundle;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.MultiFormatReader;
 import com.google.zxing.PlanarYUVLuminanceSource;
-import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
@@ -34,7 +32,7 @@ import java.util.Map;
 public final class DecodeHelper {
 
   private final MultiFormatReader multiFormatReader;
-  private boolean running = true;
+  private boolean isRunning = true;
 
   private CaptureHelper mHelper;
 
@@ -47,9 +45,12 @@ public final class DecodeHelper {
     this.mCameraManager = manager;
   }
 
-  public void quit(){
-    running = false;
-//    Looper.myLooper().quit();
+  public void startDecode(){
+    isRunning = true;
+  }
+
+  public void quitDecode(){
+    isRunning = false;
   }
 
   /**
@@ -61,41 +62,32 @@ public final class DecodeHelper {
    * @param height The height of the preview frame.
    */
   public void decode(byte[] data, int width, int height) {
-    if (!running){
+    if (!isRunning){
+      return;
+    }
+    PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
+    if (source == null){
+      mHelper.decodeFailed();
       return;
     }
     Result rawResult = null;
-    PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
-    if (source != null) {
-      BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-      try {
-        rawResult = multiFormatReader.decodeWithState(bitmap);
-      } catch (ReaderException re) {
-        // continue
-      } finally {
-        multiFormatReader.reset();
-      }
+    try {
+      rawResult = multiFormatReader.decodeWithState(new BinaryBitmap(new HybridBinarizer(source)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      multiFormatReader.reset();
     }
-
-    if (rawResult != null) {
-      // Don't log the barcode contents for security.
-      Bundle bundle = new Bundle();
-      bundleThumbnail(source, bundle);
-      mHelper.decodeSucceeded(rawResult, bundle);
-    } else {
+    if (rawResult == null){
       mHelper.decodeFailed();
+      return;
     }
-  }
-
-  private static void bundleThumbnail(PlanarYUVLuminanceSource source, Bundle bundle) {
     int[] pixels = source.renderThumbnail();
-    int width = source.getThumbnailWidth();
-    int height = source.getThumbnailHeight();
-    Bitmap bitmap = Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
+    int thumbnailWidth = source.getThumbnailWidth();
+    int thumbnailHeight = source.getThumbnailHeight();
+    Bitmap bitmap = Bitmap.createBitmap(pixels, 0, thumbnailWidth, thumbnailWidth, thumbnailHeight, Bitmap.Config.ARGB_8888);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
-    bundle.putByteArray(CaptureHelper.BARCODE_BITMAP, out.toByteArray());
-    bundle.putFloat(CaptureHelper.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
+    mHelper.decodeSucceeded(rawResult, out.toByteArray(), (float) thumbnailWidth / source.getWidth());
   }
-
 }

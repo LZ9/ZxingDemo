@@ -172,7 +172,7 @@ public final class CaptureActivity extends AppCompatActivity {
     if (result == null) {
       return;
     }
-    mHelper.decodeSucceeded(result, null);
+    mHelper.decodeSucceeded(result, null, -1f);
   }
 
   private SurfaceHolder.Callback mCallback = new SurfaceHolder.Callback() {
@@ -274,7 +274,7 @@ public final class CaptureActivity extends AppCompatActivity {
     dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
       @Override
       public void onCancel(DialogInterface dialog) {
-        restartPreviewAfterDelay(0L);
+        restartPreviewAfterDelay();
       }
     });
     dialog.show();
@@ -353,9 +353,9 @@ public final class CaptureActivity extends AppCompatActivity {
     builder.show();
   }
 
-  public void restartPreviewAfterDelay(long delayMS) {
+  public void restartPreviewAfterDelay() {
     if (mHelper != null) {
-      mHelper.restartPreview(delayMS);
+      mHelper.restartPreview();
     }
     resetStatusView();
   }
