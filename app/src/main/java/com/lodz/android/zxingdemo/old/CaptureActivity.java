@@ -74,7 +74,7 @@ public final class CaptureActivity extends AppCompatActivity {
   }
 
   private CameraManager mCameraManager;
-  private CaptureActivityHelper mHelper;
+  private CaptureHelper mHelper;
   private ViewfinderView mViewfinderView;
   private BeepManager mBeepManager;
 
@@ -293,8 +293,8 @@ public final class CaptureActivity extends AppCompatActivity {
       mCameraManager.openCamera(getContext(), Camera.CameraInfo.CAMERA_FACING_BACK, surfaceHolder);
       // Creating the handler starts the preview, which can also throw a RuntimeException.
       if (mHelper == null) {
-        mHelper = new CaptureActivityHelper(createBarcodeFormat(), mCameraManager);
-        mHelper.setListener(new CaptureActivityHelper.CaptureActivityHelperListener() {
+        mHelper = new CaptureHelper(createBarcodeFormat(), mCameraManager);
+        mHelper.setListener(new CaptureHelper.CaptureActivityHelperListener() {
           @Override
           public void onFoundPossibleResultPoint(ResultPoint point) {
             mViewfinderView.addPossibleResultPoint(point);

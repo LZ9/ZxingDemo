@@ -36,11 +36,11 @@ public final class DecodeHelper {
   private final MultiFormatReader multiFormatReader;
   private boolean running = true;
 
-  private CaptureActivityHelper mHelper;
+  private CaptureHelper mHelper;
 
   private CameraManager mCameraManager;
 
-  public DecodeHelper(CaptureActivityHelper helper, Map<DecodeHintType,Object> hints, CameraManager manager) {
+  public DecodeHelper(CaptureHelper helper, Map<DecodeHintType,Object> hints, CameraManager manager) {
     multiFormatReader = new MultiFormatReader();
     multiFormatReader.setHints(hints);
     this.mHelper = helper;
@@ -94,8 +94,8 @@ public final class DecodeHelper {
     Bitmap bitmap = Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
-    bundle.putByteArray(CaptureActivityHelper.BARCODE_BITMAP, out.toByteArray());
-    bundle.putFloat(CaptureActivityHelper.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
+    bundle.putByteArray(CaptureHelper.BARCODE_BITMAP, out.toByteArray());
+    bundle.putFloat(CaptureHelper.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
   }
 
 }

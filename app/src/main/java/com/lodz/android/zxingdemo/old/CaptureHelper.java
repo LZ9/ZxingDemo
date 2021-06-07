@@ -38,7 +38,7 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author dswitkin@google.com (Daniel Switkin)
  */
-public final class CaptureActivityHelper  {
+public final class CaptureHelper {
 
   public static final String BARCODE_BITMAP = "barcode_bitmap";
   public static final String BARCODE_SCALED_FACTOR = "barcode_scaled_factor";
@@ -57,7 +57,7 @@ public final class CaptureActivityHelper  {
     DONE
   }
 
-  CaptureActivityHelper(Collection<BarcodeFormat> decodeFormats,  CameraManager cameraManager) {
+  CaptureHelper(Collection<BarcodeFormat> decodeFormats, CameraManager cameraManager) {
     CountDownLatch handlerInitLatch = new CountDownLatch(1);
     Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
     hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
@@ -107,13 +107,13 @@ public final class CaptureActivityHelper  {
         Bitmap barcode = null;
         float scaleFactor = 1.0f;
         if (bundle != null) {
-          byte[] compressedBitmap = bundle.getByteArray(CaptureActivityHelper.BARCODE_BITMAP);
+          byte[] compressedBitmap = bundle.getByteArray(CaptureHelper.BARCODE_BITMAP);
           if (compressedBitmap != null) {
             barcode = BitmapFactory.decodeByteArray(compressedBitmap, 0, compressedBitmap.length, null);
             // Mutable copy:
             barcode = barcode.copy(Bitmap.Config.ARGB_8888, true);
           }
-          scaleFactor = bundle.getFloat(CaptureActivityHelper.BARCODE_SCALED_FACTOR);
+          scaleFactor = bundle.getFloat(CaptureHelper.BARCODE_SCALED_FACTOR);
         }
         if (mListener != null){
           mListener.decode(result, barcode, scaleFactor);
