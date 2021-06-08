@@ -52,14 +52,10 @@ public final class CameraManager {
 
   /** 相机数据 */
   private CameraBean mCameraBean;
-  private Rect framingRect;
-  private Rect framingRectInPreview;
   /** 是否初始化 */
   private boolean isInit;
   /** 是否正在预览 */
   private boolean isPreviewing;
-  private int requestedFramingRectWidth;
-  private int requestedFramingRectHeight;
 
   /**
    * 打开相机
@@ -100,13 +96,6 @@ public final class CameraManager {
       Log.i(TAG, "Camera resolution: " + cameraResolution);
       bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
       Log.i(TAG, "Best available preview size: " + bestPreviewSize);
-
-
-      if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
-        setManualFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
-        requestedFramingRectWidth = 0;
-        requestedFramingRectHeight = 0;
-      }
     }
 
     Camera cameraObject = mCameraBean.getCamera();
@@ -147,8 +136,6 @@ public final class CameraManager {
       mCameraBean.getCamera().release();
     }
     mCameraBean = null;
-    framingRect = null;
-    framingRectInPreview = null;
   }
 
   /** 开始预览 */
@@ -194,25 +181,22 @@ public final class CameraManager {
    *
    * @return The rectangle to draw on screen in window coordinates.
    */
-  public synchronized Rect getFramingRect() {
-    if (framingRect == null) {
-      if (mCameraBean == null) {
-        return null;
-      }
-      Point screenResolution = getScreenResolution();
-      if (screenResolution == null) {
-        // Called early, before init even finished
-        return null;
-      }
-
-      int width = findDesiredDimensionInRange(screenResolution.x, MIN_FRAME_WIDTH, MAX_FRAME_WIDTH);
-      int height = findDesiredDimensionInRange(screenResolution.y, MIN_FRAME_HEIGHT, MAX_FRAME_HEIGHT);
-
-      int leftOffset = (screenResolution.x - width) / 2;
-      int topOffset = (screenResolution.y - height) / 2;
-      framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
+  public Rect getFramingRect() {
+    if (mCameraBean == null) {
+      return null;
     }
-    return framingRect;
+    Point screenResolution = getScreenResolution();
+    if (screenResolution == null) {
+      // Called early, before init even finished
+      return null;
+    }
+
+    int width = findDesiredDimensionInRange(screenResolution.x, MIN_FRAME_WIDTH, MAX_FRAME_WIDTH);
+    int height = findDesiredDimensionInRange(screenResolution.y, MIN_FRAME_HEIGHT, MAX_FRAME_HEIGHT);
+
+    int leftOffset = (screenResolution.x - width) / 2;
+    int topOffset = (screenResolution.y - height) / 2;
+    return new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
   }
 
   private static int findDesiredDimensionInRange(int resolution, int hardMin, int hardMax) {
@@ -230,63 +214,35 @@ public final class CameraManager {
    * @return {@link Rect} expressing barcode scan area in terms of the preview size
    */
   public synchronized Rect getFramingRectInPreview() {
-    if (framingRectInPreview == null) {
-      Rect framingRect = getFramingRect();
-      if (framingRect == null) {
-        return null;
-      }
-      Rect rect = new Rect(framingRect);
-      Point cameraResolution = getCameraResolution();
-      Point screenResolution = getScreenResolution();
-      if (cameraResolution == null || screenResolution == null) {
-        // Called early, before init even finished
-        return null;
-      }
-
-      if (screenResolution.x > screenResolution.y) {
-        // 横屏模式保持不变
-        rect.left = rect.left * cameraResolution.x / screenResolution.x;
-        rect.right = rect.right * cameraResolution.x / screenResolution.x;
-        rect.top = rect.top * cameraResolution.y / screenResolution.y;
-        rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
-      } else {
-        // 竖屏模式 X Y 对换位置,一般 cameraResolution.x > cameraResolution.y
-        rect.left = rect.left * cameraResolution.y / screenResolution.x;
-        rect.right = rect.right * cameraResolution.y / screenResolution.x;
-        rect.top = rect.top * cameraResolution.x / screenResolution.y;
-        rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
-      }
-      framingRectInPreview = rect;
+    Rect framingRect = getFramingRect();
+    if (framingRect == null) {
+      return null;
     }
-    return framingRectInPreview;
-  }
+    Rect rect = new Rect(framingRect);
+    Point cameraResolution = getCameraResolution();
+    Point screenResolution = getScreenResolution();
+    if (cameraResolution == null || screenResolution == null) {
+      // Called early, before init even finished
+      return null;
+    }
 
-  /**
-   * Allows third party apps to specify the scanning rectangle dimensions, rather than determine
-   * them automatically based on screen resolution.
-   *
-   * @param width The width in pixels to scan.
-   * @param height The height in pixels to scan.
-   */
-  public synchronized void setManualFramingRect(int width, int height) {
-    if (isInit) {
-      Point screenResolution = getScreenResolution();
-      if (width > screenResolution.x) {
-        width = screenResolution.x;
-      }
-      if (height > screenResolution.y) {
-        height = screenResolution.y;
-      }
-      int leftOffset = (screenResolution.x - width) / 2;
-      int topOffset = (screenResolution.y - height) / 2;
-      framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
-      Log.d(TAG, "Calculated manual framing rect: " + framingRect);
-      framingRectInPreview = null;
+    if (screenResolution.x > screenResolution.y) {
+      // 横屏模式保持不变
+      rect.left = rect.left * cameraResolution.x / screenResolution.x;
+      rect.right = rect.right * cameraResolution.x / screenResolution.x;
+      rect.top = rect.top * cameraResolution.y / screenResolution.y;
+      rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
     } else {
-      requestedFramingRectWidth = width;
-      requestedFramingRectHeight = height;
+      // 竖屏模式 X Y 对换位置,一般 cameraResolution.x > cameraResolution.y
+      rect.left = rect.left * cameraResolution.y / screenResolution.x;
+      rect.right = rect.right * cameraResolution.y / screenResolution.x;
+      rect.top = rect.top * cameraResolution.x / screenResolution.y;
+      rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
     }
+    return rect;
   }
+
+
 
   /**
    * A factory method to build the appropriate LuminanceSource object based on the format
