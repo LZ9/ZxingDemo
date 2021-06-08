@@ -39,13 +39,10 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class CaptureHelper {
 
-  public static final String BARCODE_BITMAP = "barcode_bitmap";
-  public static final String BARCODE_SCALED_FACTOR = "barcode_scaled_factor";
-
   private CaptureActivityHelperListener mListener;
 
 //  private final CaptureActivity activity;
-  private State state;
+  private State mState;
   private final CameraManager cameraManager;
 
   private DecodeHelper mDecodeHelper;
@@ -56,7 +53,7 @@ public final class CaptureHelper {
     DONE
   }
 
-  CaptureHelper(Collection<BarcodeFormat> decodeFormats, CameraManager cameraManager) {
+  public CaptureHelper(Collection<BarcodeFormat> decodeFormats, CameraManager cameraManager) {
     CountDownLatch handlerInitLatch = new CountDownLatch(1);
     Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
     hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
@@ -71,7 +68,7 @@ public final class CaptureHelper {
     mDecodeHelper = new DecodeHelper(this, hints, cameraManager);
     handlerInitLatch.countDown();
 
-    state = State.SUCCESS;
+    mState = State.SUCCESS;
 
     // Start ourselves capturing previews and decoding.
     this.cameraManager = cameraManager;
@@ -92,7 +89,7 @@ public final class CaptureHelper {
     UiHandler.post(new Runnable() {
       @Override
       public void run() {
-        state = State.PREVIEW;
+        mState = State.PREVIEW;
         cameraManager.requestPreviewFrame(mDecodeHelper);
       }
     });
@@ -102,7 +99,7 @@ public final class CaptureHelper {
     UiHandler.post(new Runnable() {
       @Override
       public void run() {
-        state = State.SUCCESS;
+        mState = State.SUCCESS;
         Bitmap barcode = null;
         float scaleFactor = 1.0f;
         if (bytes != null) {
@@ -121,7 +118,7 @@ public final class CaptureHelper {
   }
 
   public void quitSynchronously() {
-    state = State.DONE;
+    mState = State.DONE;
     cameraManager.stopPreview();
     mDecodeHelper.quitDecode();
 
@@ -129,8 +126,8 @@ public final class CaptureHelper {
   }
 
   private void restartPreviewAndDecode() {
-    if (state == State.SUCCESS) {
-      state = State.PREVIEW;
+    if (mState == State.SUCCESS) {
+      mState = State.PREVIEW;
       cameraManager.requestPreviewFrame(mDecodeHelper);
       if (mListener != null){
         mListener.restartPreviewAndDecode();

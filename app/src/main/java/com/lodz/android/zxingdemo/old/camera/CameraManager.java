@@ -56,17 +56,18 @@ public final class CameraManager {
   private Rect framingRectInPreview;
   /** 是否初始化 */
   private boolean isInit;
-  private boolean previewing;
+  /** 是否正在预览 */
+  private boolean isPreviewing;
   private int requestedFramingRectWidth;
   private int requestedFramingRectHeight;
 
   /**
-   * Opens the camera driver and initializes the hardware parameters.
-   *
-   * @param holder The surface object which the camera will draw preview frames into.
-   * @throws IOException Indicates the camera driver failed to open.
+   * 打开相机
+   * @param context 上下文
+   * @param cameraId 相机id
+   * @param holder 句柄
    */
-  public synchronized void openCamera(Context context, int cameraId, SurfaceHolder holder) throws IOException {
+  public void openCamera(Context context, int cameraId, SurfaceHolder holder) throws IOException {
     if (mCameraBean == null) {
       mCameraBean = createCameraBean(cameraId);
       if (mCameraBean == null) {
@@ -135,42 +136,34 @@ public final class CameraManager {
     return null;
   }
 
-  public synchronized boolean isOpen() {
+  /** 相机是否开启 */
+  public boolean isOpen() {
     return mCameraBean != null && mCameraBean.getCamera() != null;
   }
 
-  /**
-   * Closes the camera driver if still in use.
-   */
-  public synchronized void closeDriver() {
-    if (mCameraBean != null) {
+  /** 关闭相机 */
+  public void closeCamera() {
+    if (mCameraBean != null){
       mCameraBean.getCamera().release();
-      mCameraBean = null;
-      // Make sure to clear these each time we close the camera, so that any scanning rect
-      // requested by intent is forgotten.
-      framingRect = null;
-      framingRectInPreview = null;
+    }
+    mCameraBean = null;
+    framingRect = null;
+    framingRectInPreview = null;
+  }
+
+  /** 开始预览 */
+  public void startPreview() {
+    if (mCameraBean != null && !isPreviewing) {
+      mCameraBean.getCamera().startPreview();
+      isPreviewing = true;
     }
   }
 
-  /**
-   * Asks the camera hardware to begin drawing preview frames to the screen.
-   */
-  public synchronized void startPreview() {
-    CameraBean theCamera = mCameraBean;
-    if (theCamera != null && !previewing) {
-      theCamera.getCamera().startPreview();
-      previewing = true;
-    }
-  }
-
-  /**
-   * Tells the camera to stop drawing preview frames.
-   */
-  public synchronized void stopPreview() {
-    if (mCameraBean != null && previewing) {
+  /** 停止预览 */
+  public void stopPreview() {
+    if (mCameraBean != null && isPreviewing) {
       mCameraBean.getCamera().stopPreview();
-      previewing = false;
+      isPreviewing = false;
     }
   }
 
@@ -182,7 +175,7 @@ public final class CameraManager {
    */
   public synchronized void requestPreviewFrame(DecodeHelper decodeHelper) {
     CameraBean theCamera = mCameraBean;
-    if (theCamera != null && previewing) {
+    if (theCamera != null && isPreviewing) {
       theCamera.getCamera().setOneShotPreviewCallback(new Camera.PreviewCallback(){
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
@@ -367,7 +360,7 @@ public final class CameraManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  private int  initFromCameraParameters(CameraBean cameraBean, int displayRotation) {
+  private int initFromCameraParameters(CameraBean cameraBean, int displayRotation) {
     int cwRotationFromNaturalToDisplay;
     switch (displayRotation) {
       case Surface.ROTATION_0:

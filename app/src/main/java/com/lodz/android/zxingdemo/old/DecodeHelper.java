@@ -54,12 +54,10 @@ public final class DecodeHelper {
   }
 
   /**
-   * Decode the data within the viewfinder rectangle, and time how long it took. For efficiency,
-   * reuse the same reader objects from one decode to the next.
-   *
-   * @param data   The YUV preview frame.
-   * @param width  The width of the preview frame.
-   * @param height The height of the preview frame.
+   * 解码
+   * @param data 图片数据
+   * @param width 宽
+   * @param height 高
    */
   public void decode(byte[] data, int width, int height) {
     if (!isRunning){
@@ -90,4 +88,5 @@ public final class DecodeHelper {
     bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
     mHelper.decodeSucceeded(rawResult, out.toByteArray(), (float) thumbnailWidth / source.getWidth());
   }
+
 }

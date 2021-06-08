@@ -81,8 +81,8 @@ public final class CaptureActivity extends AppCompatActivity {
   private SurfaceView mSurfaceView;
 
   @Override
-  public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
+  public void onCreate(Bundle bundle) {
+    super.onCreate(bundle);
 
     Window window = getWindow();
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -153,7 +153,7 @@ public final class CaptureActivity extends AppCompatActivity {
       mHelper = null;
     }
     mBeepManager.release();
-    mCameraManager.closeDriver();
+    mCameraManager.closeCamera();
     //historyManager = null; // Keep for onActivityResult
     mSurfaceView.getHolder().removeCallback(mCallback);
     super.finish();
