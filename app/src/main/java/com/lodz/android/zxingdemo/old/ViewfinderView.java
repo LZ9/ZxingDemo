@@ -56,17 +56,17 @@ public final class ViewfinderView extends View {
 
   private CameraManager mCameraManager;
 
-
-  private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  /** 画笔 */
+  private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
   /** 遮罩曾颜色 */
-  private final int maskColor = getResources().getColor(R.color.viewfinder_mask);
+  private final int mMaskColor = getResources().getColor(R.color.viewfinder_mask);
   /** 扫描线颜色 */
-  private final int laserColor = getResources().getColor(R.color.viewfinder_laser);
+  private final int mLaserColor = getResources().getColor(R.color.viewfinder_laser);
   /** 识别点颜色 */
-  private final int resultPointColor = getResources().getColor(R.color.possible_result_points);
+  private final int mResultPointColor = getResources().getColor(R.color.possible_result_points);
   /** 扫描线透明度 */
-  private int laserAlpha = 0;
+  private int mLaserAlpha = 0;
 
   /** 识别点列表 */
   private List<ResultPoint> mPointList = new ArrayList<>();
@@ -110,19 +110,19 @@ public final class ViewfinderView extends View {
 
     // Draw the exterior (i.e. outside the framing rect) darkened
     // 绘制遮罩层
-    paint.setColor( maskColor);
-    canvas.drawRect(0, 0, width, frame.top, paint);
-    canvas.drawRect(0, frame.top, frame.left, frame.bottom + 1, paint);
-    canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1, paint);
-    canvas.drawRect(0, frame.bottom + 1, width, height, paint);
+    mPaint.setColor(mMaskColor);
+    canvas.drawRect(0, 0, width, frame.top, mPaint);
+    canvas.drawRect(0, frame.top, frame.left, frame.bottom + 1, mPaint);
+    canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1, mPaint);
+    canvas.drawRect(0, frame.bottom + 1, width, height, mPaint);
 
     // Draw a red "laser scanner" line through the middle to show decoding is active
     // 绘制扫描线
-    paint.setColor(laserColor);
-    paint.setAlpha(LASER_ALPHA[laserAlpha]);
-    laserAlpha = (laserAlpha + 1) % LASER_ALPHA.length;
+    mPaint.setColor(mLaserColor);
+    mPaint.setAlpha(LASER_ALPHA[mLaserAlpha]);
+    mLaserAlpha = (mLaserAlpha + 1) % LASER_ALPHA.length;
     int middle = frame.height() / 2 + frame.top;
-    canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+    canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, mPaint);
 
 
     float scaleX = frame.width() / (float) previewFrame.width();
@@ -140,21 +140,21 @@ public final class ViewfinderView extends View {
       mLastPointList = new ArrayList<>();
       mLastPointList.addAll(mPointList);
       mPointList.clear();
-      paint.setAlpha(CURRENT_POINT_OPACITY);
-      paint.setColor(resultPointColor);
+      mPaint.setAlpha(CURRENT_POINT_OPACITY);
+      mPaint.setColor(mResultPointColor);
       synchronized (this) {
         for (ResultPoint point : mLastPointList) {
-          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), POINT_SIZE, paint);
+          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), POINT_SIZE, mPaint);
         }
       }
 
       // 画识别圆点
-      paint.setAlpha(CURRENT_POINT_OPACITY / 2);
-      paint.setColor(resultPointColor);
+      mPaint.setAlpha(CURRENT_POINT_OPACITY / 2);
+      mPaint.setColor(mResultPointColor);
       synchronized (this) {
         float radius = POINT_SIZE / 2.0f;
         for (ResultPoint point : mLastPointList) {
-          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), radius, paint);
+          canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX), frameTop + (int) (point.getY() * scaleY), radius, mPaint);
         }
       }
     }
