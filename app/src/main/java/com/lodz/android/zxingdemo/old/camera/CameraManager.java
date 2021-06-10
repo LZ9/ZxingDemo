@@ -57,6 +57,11 @@ public final class CameraManager {
   /** 是否正在预览 */
   private boolean isPreviewing;
 
+  private int cwRotationFromDisplayToCamera;
+  private Point mScreenResolution;
+  private Point cameraResolution;
+  private Point bestPreviewSize;
+
   /**
    * 打开相机
    * @param context 上下文
@@ -90,11 +95,11 @@ public final class CameraManager {
       Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
       Point theScreenResolution = new Point();
       display.getSize(theScreenResolution);
-      screenResolution = theScreenResolution;
-      Log.i(TAG, "Screen resolution in current orientation: " + screenResolution);
-      cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+      mScreenResolution = theScreenResolution;
+      Log.i(TAG, "Screen resolution in current orientation: " + mScreenResolution);
+      cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
       Log.i(TAG, "Camera resolution: " + cameraResolution);
-      bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+      bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
       Log.i(TAG, "Best available preview size: " + bestPreviewSize);
     }
 
@@ -185,7 +190,7 @@ public final class CameraManager {
     if (mCameraBean == null) {
       return null;
     }
-    Point screenResolution = getScreenResolution();
+    Point screenResolution = mScreenResolution;
     if (screenResolution == null) {
       // Called early, before init even finished
       return null;
@@ -220,7 +225,7 @@ public final class CameraManager {
     }
     Rect rect = new Rect(framingRect);
     Point cameraResolution = getCameraResolution();
-    Point screenResolution = getScreenResolution();
+    Point screenResolution = mScreenResolution;
     if (cameraResolution == null || screenResolution == null) {
       // Called early, before init even finished
       return null;
@@ -259,7 +264,7 @@ public final class CameraManager {
       return null;
     }
     // 如果竖屏进行数据翻转
-    Point screenResolution = getScreenResolution();
+    Point screenResolution = mScreenResolution;
     if (screenResolution.x < screenResolution.y) {
 
       byte[] rotatedData = new byte[data.length];
@@ -303,15 +308,6 @@ public final class CameraManager {
     CameraConfigurationUtils.setTorch(parameters, isOpen);
     mCameraBean.getCamera().setParameters(parameters);
   }
-
-
-
-
-
-  private int cwRotationFromDisplayToCamera;
-  private Point screenResolution;
-  private Point cameraResolution;
-  private Point bestPreviewSize;
 
   /**
    * Reads, one time, values from the camera that are needed by the app.
@@ -389,10 +385,6 @@ public final class CameraManager {
 
   private Point getCameraResolution() {
     return cameraResolution;
-  }
-
-  private Point getScreenResolution() {
-    return screenResolution;
   }
 
 }
