@@ -28,7 +28,7 @@ import android.view.WindowManager;
 
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.client.android.camera.CameraConfigurationUtils;
-import com.lodz.android.zxingdemo.old.DecodeHelper;
+import com.lodz.android.zxingdemo.old.CaptureHelper;
 import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
 
 import java.io.IOException;
@@ -98,13 +98,13 @@ public final class CameraManager {
       Log.i(TAG, "Best available preview size: " + bestPreviewSize);
     }
 
-    Camera cameraObject = mCameraBean.getCamera();
+    Camera camera = mCameraBean.getCamera();
     try {
       configCameraParameters(mCameraBean);
     } catch (Exception e) {
       e.printStackTrace();
     }
-    cameraObject.setPreviewDisplay(holder);
+    camera.setPreviewDisplay(holder);
   }
 
   /**
@@ -160,14 +160,14 @@ public final class CameraManager {
    * respectively.
    *
    */
-  public synchronized void requestPreviewFrame(DecodeHelper decodeHelper) {
+  public synchronized void requestPreviewFrame(CaptureHelper helper) {
     CameraBean theCamera = mCameraBean;
     if (theCamera != null && isPreviewing) {
       theCamera.getCamera().setOneShotPreviewCallback(new Camera.PreviewCallback(){
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-          if (cameraResolution != null && decodeHelper != null) {
-            decodeHelper.decode(data, cameraResolution.x, cameraResolution.y);
+          if (cameraResolution != null && helper != null) {
+            helper.decode(data, cameraResolution.x, cameraResolution.y);
           }
         }
       });

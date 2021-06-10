@@ -20,13 +20,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.ResultPointCallback;
+import com.google.zxing.common.HybridBinarizer;
 import com.lodz.android.corekt.utils.UiHandler;
 import com.lodz.android.zxingdemo.old.camera.CameraManager;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
@@ -43,9 +48,7 @@ public final class CaptureHelper {
 
 //  private final CaptureActivity activity;
   private State mState;
-  private final CameraManager cameraManager;
-
-  private DecodeHelper mDecodeHelper;
+  private final CameraManager mCameraManager;
 
   private enum State {
     PREVIEW,
@@ -65,13 +68,16 @@ public final class CaptureHelper {
         }
       }
     });
-    mDecodeHelper = new DecodeHelper(this, hints, cameraManager);
+
+    multiFormatReader = new MultiFormatReader();
+    multiFormatReader.setHints(hints);
+
     handlerInitLatch.countDown();
 
     mState = State.SUCCESS;
 
     // Start ourselves capturing previews and decoding.
-    this.cameraManager = cameraManager;
+    this.mCameraManager = cameraManager;
     cameraManager.startPreview();
     restartPreviewAndDecode();
   }
@@ -90,7 +96,7 @@ public final class CaptureHelper {
       @Override
       public void run() {
         mState = State.PREVIEW;
-        cameraManager.requestPreviewFrame(mDecodeHelper);
+        mCameraManager.requestPreviewFrame(CaptureHelper.this);
       }
     });
   }
@@ -119,8 +125,8 @@ public final class CaptureHelper {
 
   public void quitSynchronously() {
     mState = State.DONE;
-    cameraManager.stopPreview();
-    mDecodeHelper.quitDecode();
+    mCameraManager.stopPreview();
+    quitDecode();
 
     // Be absolutely sure we don't send any queued up messages
   }
@@ -128,12 +134,61 @@ public final class CaptureHelper {
   private void restartPreviewAndDecode() {
     if (mState == State.SUCCESS) {
       mState = State.PREVIEW;
-      cameraManager.requestPreviewFrame(mDecodeHelper);
+      mCameraManager.requestPreviewFrame(CaptureHelper.this);
       if (mListener != null){
         mListener.restartPreviewAndDecode();
       }
     }
   }
+
+  private MultiFormatReader multiFormatReader;
+  private boolean isRunning = true;
+
+
+  public void startDecode(){
+    isRunning = true;
+  }
+
+  public void quitDecode(){
+    isRunning = false;
+  }
+
+  /**
+   * 解码
+   * @param data 图片数据
+   * @param width 宽
+   * @param height 高
+   */
+  public void decode(byte[] data, int width, int height) {
+    if (!isRunning){
+      return;
+    }
+    PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
+    if (source == null){
+      decodeFailed();
+      return;
+    }
+    Result rawResult = null;
+    try {
+      rawResult = multiFormatReader.decodeWithState(new BinaryBitmap(new HybridBinarizer(source)));
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      multiFormatReader.reset();
+    }
+    if (rawResult == null){
+      decodeFailed();
+      return;
+    }
+    int[] pixels = source.renderThumbnail();
+    int thumbnailWidth = source.getThumbnailWidth();
+    int thumbnailHeight = source.getThumbnailHeight();
+    Bitmap bitmap = Bitmap.createBitmap(pixels, 0, thumbnailWidth, thumbnailWidth, thumbnailHeight, Bitmap.Config.ARGB_8888);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, out);
+    decodeSucceeded(rawResult, out.toByteArray(), (float) thumbnailWidth / source.getWidth());
+  }
+
 
   public void setListener(CaptureActivityHelperListener listener){
     mListener = listener;
