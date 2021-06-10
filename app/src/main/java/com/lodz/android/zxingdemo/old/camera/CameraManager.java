@@ -59,8 +59,7 @@ public final class CameraManager {
 
   private int cwRotationFromDisplayToCamera;
   private Point mScreenResolution;
-  private Point cameraResolution;
-  private Point bestPreviewSize;
+  private Point mBestPreviewSize;
 
   /**
    * 打开相机
@@ -97,10 +96,8 @@ public final class CameraManager {
       display.getSize(theScreenResolution);
       mScreenResolution = theScreenResolution;
       Log.i(TAG, "Screen resolution in current orientation: " + mScreenResolution);
-      cameraResolution = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
-      Log.i(TAG, "Camera resolution: " + cameraResolution);
-      bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
-      Log.i(TAG, "Best available preview size: " + bestPreviewSize);
+      mBestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
+      Log.i(TAG, "Best available preview size: " + mBestPreviewSize);
     }
 
     Camera camera = mCameraBean.getCamera();
@@ -171,8 +168,8 @@ public final class CameraManager {
       theCamera.getCamera().setOneShotPreviewCallback(new Camera.PreviewCallback(){
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-          if (cameraResolution != null && helper != null) {
-            helper.decode(data, cameraResolution.x, cameraResolution.y);
+          if (mBestPreviewSize != null && helper != null) {
+            helper.decode(data, mBestPreviewSize.x, mBestPreviewSize.y);
           }
         }
       });
@@ -224,7 +221,7 @@ public final class CameraManager {
       return null;
     }
     Rect rect = new Rect(framingRect);
-    Point cameraResolution = getCameraResolution();
+    Point cameraResolution = mBestPreviewSize;
     Point screenResolution = mScreenResolution;
     if (cameraResolution == null || screenResolution == null) {
       // Called early, before init even finished
@@ -367,7 +364,7 @@ public final class CameraManager {
     CameraConfigurationUtils.setFocus(parameters, true, false, false);
     parameters.setRecordingHint(true);
 
-    parameters.setPreviewSize(bestPreviewSize.x, bestPreviewSize.y);
+    parameters.setPreviewSize(mBestPreviewSize.x, mBestPreviewSize.y);
 
     camera.setParameters(parameters);
 
@@ -375,16 +372,12 @@ public final class CameraManager {
 
     Camera.Parameters afterParameters = camera.getParameters();
     Camera.Size afterSize = afterParameters.getPreviewSize();
-    if (afterSize != null && (bestPreviewSize.x != afterSize.width || bestPreviewSize.y != afterSize.height)) {
-      Log.w(TAG, "Camera said it supported preview size " + bestPreviewSize.x + 'x' + bestPreviewSize.y +
+    if (afterSize != null && (mBestPreviewSize.x != afterSize.width || mBestPreviewSize.y != afterSize.height)) {
+      Log.w(TAG, "Camera said it supported preview size " + mBestPreviewSize.x + 'x' + mBestPreviewSize.y +
               ", but after setting it, preview size is " + afterSize.width + 'x' + afterSize.height);
-      bestPreviewSize.x = afterSize.width;
-      bestPreviewSize.y = afterSize.height;
+      mBestPreviewSize.x = afterSize.width;
+      mBestPreviewSize.y = afterSize.height;
     }
-  }
-
-  private Point getCameraResolution() {
-    return cameraResolution;
   }
 
 }
