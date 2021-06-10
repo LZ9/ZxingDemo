@@ -101,7 +101,7 @@ public final class ViewfinderView extends View {
     }
 
     Rect frame = mCameraManager.getFramingRect();
-    Rect previewFrame = mCameraManager.getFramingRectInPreview();
+    Rect previewFrame = mCameraManager.getFramingRect();
     if (frame == null || previewFrame == null) {
       return;
     }

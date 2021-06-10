@@ -45,10 +45,14 @@ public final class CameraManager {
 
   private static final String TAG = CameraManager.class.getSimpleName();
 
-  private static final int MIN_FRAME_WIDTH = 240;
-  private static final int MIN_FRAME_HEIGHT = 240;
-  private static final int MAX_FRAME_WIDTH = 1200; // = 5/8 * 1920
-  private static final int MAX_FRAME_HEIGHT = 675; // = 5/8 * 1080
+  /** 最小扫描宽度 */
+  private static final int MIN_SCAN_FRAME_WIDTH = 432; // = 720 * 0.6
+  /** 最小扫描高度 */
+  private static final int MIN_SCAN_FRAME_HEIGHT = 432;
+  /** 最大扫描宽度 */
+  private static final int MAX_SCAN_FRAME_WIDTH = 648; // = 1080 * 0.6
+  /** 最大扫描高度 */
+  private static final int MAX_SCAN_FRAME_HEIGHT = 648;
 
   /** 相机数据 */
   private CameraBean mCameraBean;
@@ -187,64 +191,26 @@ public final class CameraManager {
     if (mCameraBean == null) {
       return null;
     }
-    Point screenResolution = mScreenResolution;
-    if (screenResolution == null) {
+    if (mScreenResolution == null) {
       // Called early, before init even finished
       return null;
     }
 
-    int width = findDesiredDimensionInRange(screenResolution.x, MIN_FRAME_WIDTH, MAX_FRAME_WIDTH);
-    int height = findDesiredDimensionInRange(screenResolution.y, MIN_FRAME_HEIGHT, MAX_FRAME_HEIGHT);
+    int width = findDesiredDimensionInRange(mScreenResolution.x, MIN_SCAN_FRAME_WIDTH, MAX_SCAN_FRAME_WIDTH);
+    int height = findDesiredDimensionInRange(mScreenResolution.y, MIN_SCAN_FRAME_HEIGHT, MAX_SCAN_FRAME_HEIGHT);
 
-    int leftOffset = (screenResolution.x - width) / 2;
-    int topOffset = (screenResolution.y - height) / 2;
+    int leftOffset = (mScreenResolution.x - width) / 2;
+    int topOffset = (mScreenResolution.y - height) / 2;
     return new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
   }
 
-  private static int findDesiredDimensionInRange(int resolution, int hardMin, int hardMax) {
-    int dim = 5 * resolution / 8; // Target 5/8 of each dimension
+  private int findDesiredDimensionInRange(int resolution, int hardMin, int hardMax) {
+    int dim = Math.round(resolution * 0.6f);
     if (dim < hardMin) {
       return hardMin;
     }
     return Math.min(dim, hardMax);
   }
-
-  /**
-   * Like {@link #getFramingRect} but coordinates are in terms of the preview frame,
-   * not UI / screen.
-   *
-   * @return {@link Rect} expressing barcode scan area in terms of the preview size
-   */
-  public synchronized Rect getFramingRectInPreview() {
-    Rect framingRect = getFramingRect();
-    if (framingRect == null) {
-      return null;
-    }
-    Rect rect = new Rect(framingRect);
-    Point cameraResolution = mBestPreviewSize;
-    Point screenResolution = mScreenResolution;
-    if (cameraResolution == null || screenResolution == null) {
-      // Called early, before init even finished
-      return null;
-    }
-
-    if (screenResolution.x > screenResolution.y) {
-      // 横屏模式保持不变
-      rect.left = rect.left * cameraResolution.x / screenResolution.x;
-      rect.right = rect.right * cameraResolution.x / screenResolution.x;
-      rect.top = rect.top * cameraResolution.y / screenResolution.y;
-      rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
-    } else {
-      // 竖屏模式 X Y 对换位置,一般 cameraResolution.x > cameraResolution.y
-      rect.left = rect.left * cameraResolution.y / screenResolution.x;
-      rect.right = rect.right * cameraResolution.y / screenResolution.x;
-      rect.top = rect.top * cameraResolution.x / screenResolution.y;
-      rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
-    }
-    return rect;
-  }
-
-
 
   /**
    * A factory method to build the appropriate LuminanceSource object based on the format
@@ -256,7 +222,7 @@ public final class CameraManager {
    * @return A PlanarYUVLuminanceSource instance.
    */
   public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, int width, int height) {
-    Rect rect = getFramingRectInPreview();
+    Rect rect = getFramingRect();
     if (rect == null) {
       return null;
     }
