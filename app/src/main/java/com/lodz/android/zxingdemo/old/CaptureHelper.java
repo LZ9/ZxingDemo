@@ -18,6 +18,9 @@ package com.lodz.android.zxingdemo.old;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
@@ -163,6 +166,7 @@ public final class CaptureHelper {
     if (!isRunning){
       return;
     }
+//    Bitmap a = BitmapUtils.rotateBitmap(getPriviewPic(data, width, height), 90f);
     PlanarYUVLuminanceSource source = mCameraManager.buildLuminanceSource(data, width, height);
     if (source == null){
       decodeFailed();
@@ -189,6 +193,23 @@ public final class CaptureHelper {
     decodeSucceeded(rawResult, out.toByteArray(), (float) thumbnailWidth / source.getWidth());
   }
 
+  private Bitmap getPriviewPic(byte[] data, int width, int height) {//这里传入的data参数就是onpreviewFrame中需要传入的byte[]型数据
+    BitmapFactory.Options newOpts = new BitmapFactory.Options();
+    newOpts.inJustDecodeBounds = true;
+    YuvImage yuvimage = new YuvImage(
+            data,
+            ImageFormat.NV21,
+            width,
+            height,
+            null);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    yuvimage.compressToJpeg(new Rect(0, 0, width, height), 100, baos);// 80--JPG图片的质量[0-100],100最高
+    byte[] rawImage = baos.toByteArray();
+    //将rawImage转换成bitmap
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inPreferredConfig = Bitmap.Config.RGB_565;
+    return BitmapFactory.decodeByteArray(rawImage, 0, rawImage.length, options);
+  }
 
   public void setListener(CaptureActivityHelperListener listener){
     mListener = listener;
