@@ -17,12 +17,8 @@
 package com.lodz.android.zxingdemo.old.camera;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.Display;
@@ -35,7 +31,9 @@ import com.google.zxing.client.android.camera.CameraConfigurationUtils;
 import com.lodz.android.zxingdemo.old.CaptureHelper;
 import com.lodz.android.zxingdemo.old.camera.open.CameraBean;
 
-import java.io.ByteArrayOutputStream;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 
 /**
@@ -177,8 +175,8 @@ public final class CameraManager {
       theCamera.getCamera().setOneShotPreviewCallback(new Camera.PreviewCallback(){
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-          if (mBestPreviewSize != null && helper != null) {
-            helper.decode(data, mBestPreviewSize.x, mBestPreviewSize.y);
+          if (helper != null) {
+            helper.decode(data, camera);
           }
         }
       });
@@ -222,60 +220,28 @@ public final class CameraManager {
    * of the preview buffers, as described by Camera.Parameters.
    *
    * @param data A preview frame.
-   * @param width The width of the image.
-   * @param height The height of the image.
    * @return A PlanarYUVLuminanceSource instance.
    */
-  public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, int width, int height) {
+  public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, Camera camera) {
     Rect rect = getFramingRect();
     if (rect == null) {
       return null;
     }
 
-    byte[] rotate = rotateYUV420Degree90(data, width, height);
-//    Bitmap a = getPriviewPic(rotate, height, width);
+    int width = camera.getParameters().getPreviewSize().width;
+    int height = camera.getParameters().getPreviewSize().height;
 
-//    // 如果竖屏进行数据翻转
-//    Point screenResolution = mScreenResolution;
-//    if (screenResolution.x < screenResolution.y) {
-//
-//      byte[] rotatedData = new byte[data.length];
-//      int newWidth = height;
-//      int newHeight = width;
-//
-//      for (int y = 0; y < height; y++) {
-//
-//        for (int x = 0; x < width; x++) {
-//          rotatedData[x * newWidth + newWidth - 1 - y] = data[x + y * width];
-//        }
-//      }
-//      return new PlanarYUVLuminanceSource(rotatedData, newWidth, newHeight, rect.left, rect.top, rect.width(), rect.height(), false);
-//    }
-    // Go ahead and assume it's YUV rather than die.
+    byte[] rotate = rotateYUV420Degree90(data, camera);
     return new PlanarYUVLuminanceSource(rotate, height, width, rect.left, rect.top, rect.width(), rect.height(), false);
   }
 
-  private Bitmap getPriviewPic(byte[] data, int width, int height) {//这里传入的data参数就是onpreviewFrame中需要传入的byte[]型数据
-    BitmapFactory.Options newOpts = new BitmapFactory.Options();
-    newOpts.inJustDecodeBounds = true;
-    YuvImage yuvimage = new YuvImage(
-            data,
-            ImageFormat.NV21,
-            width,
-            height,
-            null);
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    yuvimage.compressToJpeg(new Rect(0, 0, width, height), 100, baos);// 80--JPG图片的质量[0-100],100最高
-    byte[] rawImage = baos.toByteArray();
-    //将rawImage转换成bitmap
-    BitmapFactory.Options options = new BitmapFactory.Options();
-    options.inPreferredConfig = Bitmap.Config.RGB_565;
-    return BitmapFactory.decodeByteArray(rawImage, 0, rawImage.length, options);
-  }
-
-
   /** 将图像的数据流翻转90度 */
-  private byte[] rotateYUV420Degree90(byte[] data, int imageWidth, int imageHeight) {
+  @NotNull
+  @Contract(pure = true)
+  private byte[] rotateYUV420Degree90(byte[] data, Camera camera) {
+    int imageWidth = camera.getParameters().getPreviewSize().width;
+    int imageHeight = camera.getParameters().getPreviewSize().height;
+
     byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
 // Rotate the Y luma
     int i = 0;
@@ -293,48 +259,6 @@ public final class CameraManager {
         i--;
         yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
         i--;
-      }
-    }
-    return yuv;
-  }
-
-  /**
-   * 将图像的数据流翻转180度
-   */
-  private byte[] rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight) {
-    byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
-    int i = 0;
-    int count = 0;
-    for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
-      yuv[count] = data[i];
-      count++;
-    }
-    i = imageWidth * imageHeight * 3 / 2 - 1;
-    for (; i >= imageWidth * imageHeight; i -= 2) {
-      yuv[count++] = data[i - 1];
-      yuv[count++] = data[i];
-    }
-    return yuv;
-  }
-
-
-  //clockwise180:IplImage.create(640, 480) && new NewFFmpegFrameRecorder(640, 480)上述2处无需改动 byte[] outdata;		 outdata = rotateYUV420Degree180(data, 640, 480);
-  private byte[] rotateYUV420Degree270(byte[] data, int imageWidth, int imageHeight) {
-    byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
-    // Rotate the Y luma
-    int i = 0;
-    for (int x = imageWidth - 1; x >= 0; x--) {
-      for (int y = 0; y < imageHeight; y++) {
-        yuv[i] = data[y * imageWidth + x];
-        i++;
-      }
-    }// Rotate the U and V color components  	i = imageWidth*imageHeight;
-    for (int x = imageWidth - 1; x > 0; x = x - 2) {
-      for (int y = 0; y < imageHeight / 2; y++) {
-        yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
-        i++;
-        yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
-        i++;
       }
     }
     return yuv;
