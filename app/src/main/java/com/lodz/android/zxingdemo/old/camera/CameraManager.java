@@ -59,14 +59,8 @@ public final class CameraManager {
 
   /** 相机数据 */
   private CameraBean mCameraBean;
-  /** 是否初始化 */
-  private boolean isInit;
   /** 是否正在预览 */
   private boolean isPreviewing;
-
-  private int cwRotationFromDisplayToCamera;
-  private Point mScreenResolution;
-  private Point mBestPreviewSize;
 
   /**
    * 打开相机
@@ -83,33 +77,27 @@ public final class CameraManager {
       }
     }
 
-    if (!isInit) {
-      isInit = true;
+    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    Display display = manager.getDefaultDisplay();
+
+    int displayRotation = display.getRotation();
 
 
-      WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-      Display display = manager.getDefaultDisplay();
-
-      int displayRotation = display.getRotation();
-
-
-      cwRotationFromDisplayToCamera = initFromCameraParameters(mCameraBean, displayRotation);
-      Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
+    int cwRotationFromDisplayToCamera = initFromCameraParameters(mCameraBean, displayRotation);
+    Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
 
 
 
-      Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
-      Point theScreenResolution = new Point();
-      display.getSize(theScreenResolution);
-      mScreenResolution = theScreenResolution;
-      Log.i(TAG, "Screen resolution in current orientation: " + mScreenResolution);
-      mBestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, mScreenResolution);
-      Log.i(TAG, "Best available preview size: " + mBestPreviewSize);
-    }
+    Camera.Parameters parameters = mCameraBean.getCamera().getParameters();
+    Point screenResolution = new Point();
+    display.getSize(screenResolution);
+    Log.i(TAG, "Screen resolution in current orientation: " + screenResolution);
+    Point bestPreviewSize = CameraConfigurationUtils.findBestPreviewSizeValue(parameters, screenResolution);
+    Log.i(TAG, "Best available preview size: " + bestPreviewSize);
 
     Camera camera = mCameraBean.getCamera();
     try {
-      configCameraParameters(mCameraBean);
+      configCameraParameters(mCameraBean, bestPreviewSize, cwRotationFromDisplayToCamera);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -194,16 +182,17 @@ public final class CameraManager {
     if (mCameraBean == null) {
       return null;
     }
-    if (mScreenResolution == null) {
+    if (mCameraBean.getCamera() == null) {
       // Called early, before init even finished
       return null;
     }
 
-    int width = findDesiredDimensionInRange(mScreenResolution.x, MIN_SCAN_FRAME_WIDTH, MAX_SCAN_FRAME_WIDTH);
-    int height = findDesiredDimensionInRange(mScreenResolution.y, MIN_SCAN_FRAME_HEIGHT, MAX_SCAN_FRAME_HEIGHT);
 
-    int leftOffset = (mScreenResolution.x - width) / 2;
-    int topOffset = (mScreenResolution.y - height) / 2;
+    int width = findDesiredDimensionInRange(mCameraBean.getCamera().getParameters().getPreviewSize().height, MIN_SCAN_FRAME_WIDTH, MAX_SCAN_FRAME_WIDTH);
+    int height = findDesiredDimensionInRange(mCameraBean.getCamera().getParameters().getPreviewSize().width, MIN_SCAN_FRAME_HEIGHT, MAX_SCAN_FRAME_HEIGHT);
+
+    int leftOffset = (mCameraBean.getCamera().getParameters().getPreviewSize().height - width) / 2;
+    int topOffset = (mCameraBean.getCamera().getParameters().getPreviewSize().width - height) / 2;
     return new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
   }
 
@@ -333,7 +322,7 @@ public final class CameraManager {
    * 配置相机参数
    * @param cameraBean 相机数据
    */
-  private void configCameraParameters(CameraBean cameraBean) {
+  private void configCameraParameters(CameraBean cameraBean, Point bestPreviewSize, int cwRotationFromDisplayToCamera) {
 
     Camera camera = cameraBean.getCamera();
     Camera.Parameters parameters = camera.getParameters();
@@ -348,7 +337,7 @@ public final class CameraManager {
     CameraConfigurationUtils.setFocus(parameters, true, false, false);
     parameters.setRecordingHint(true);
 
-    parameters.setPreviewSize(mBestPreviewSize.x, mBestPreviewSize.y);
+    parameters.setPreviewSize(bestPreviewSize.x, bestPreviewSize.y);
 
     camera.setParameters(parameters);
 
@@ -356,11 +345,11 @@ public final class CameraManager {
 
     Camera.Parameters afterParameters = camera.getParameters();
     Camera.Size afterSize = afterParameters.getPreviewSize();
-    if (afterSize != null && (mBestPreviewSize.x != afterSize.width || mBestPreviewSize.y != afterSize.height)) {
-      Log.w(TAG, "Camera said it supported preview size " + mBestPreviewSize.x + 'x' + mBestPreviewSize.y +
+    if (afterSize != null && (bestPreviewSize.x != afterSize.width || bestPreviewSize.y != afterSize.height)) {
+      Log.w(TAG, "Camera said it supported preview size " + bestPreviewSize.x + 'x' + bestPreviewSize.y +
               ", but after setting it, preview size is " + afterSize.width + 'x' + afterSize.height);
-      mBestPreviewSize.x = afterSize.width;
-      mBestPreviewSize.y = afterSize.height;
+      bestPreviewSize.x = afterSize.width;
+      bestPreviewSize.y = afterSize.height;
     }
   }
 
