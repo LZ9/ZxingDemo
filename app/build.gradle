@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    implementation 'ink.lodz:pandora:1.6.5'
+    implementation 'ink.lodz:pandora:1.6.6'
     // 权限申请
     implementation "com.github.permissions-dispatcher:ktx:1.0.5"
 

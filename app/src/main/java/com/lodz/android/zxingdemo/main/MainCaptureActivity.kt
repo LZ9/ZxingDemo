@@ -3,6 +3,7 @@ package com.lodz.android.zxingdemo.main
 import android.content.Context
 import android.content.Intent
 import android.graphics.RectF
+import android.hardware.Camera
 import android.view.SurfaceView
 import android.view.WindowManager
 import android.widget.Button
@@ -66,7 +67,7 @@ class MainCaptureActivity : AbsActivity() {
 
             }
 
-            override fun onPreviewFrame(data: ByteArray?) {
+            override fun onPreviewFrame(data: ByteArray?, camera: Camera) {
 
 
             }
@@ -78,7 +79,7 @@ class MainCaptureActivity : AbsActivity() {
 
             }
 
-            override fun onTakePic(data: ByteArray?) {
+            override fun onTakePic(data: ByteArray?, camera: Camera) {
 
 
             }

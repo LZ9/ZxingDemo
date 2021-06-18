@@ -83,7 +83,7 @@ public final class CameraManager {
     int displayRotation = display.getRotation();
 
 
-    int cwRotationFromDisplayToCamera = initFromCameraParameters(mCameraBean, displayRotation);
+    int cwRotationFromDisplayToCamera = getDisplayOrientation(mCameraBean, displayRotation);
     Log.i(TAG, "Final display orientation: " + cwRotationFromDisplayToCamera);
 
 
@@ -191,9 +191,12 @@ public final class CameraManager {
     int width = findDesiredDimensionInRange(mCameraBean.getCamera().getParameters().getPreviewSize().height, MIN_SCAN_FRAME_WIDTH, MAX_SCAN_FRAME_WIDTH);
     int height = findDesiredDimensionInRange(mCameraBean.getCamera().getParameters().getPreviewSize().width, MIN_SCAN_FRAME_HEIGHT, MAX_SCAN_FRAME_HEIGHT);
 
-    int leftOffset = (mCameraBean.getCamera().getParameters().getPreviewSize().height - width) / 2;
-    int topOffset = (mCameraBean.getCamera().getParameters().getPreviewSize().width - height) / 2;
-    return new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
+    int left = (mCameraBean.getCamera().getParameters().getPreviewSize().height - width) / 2;
+    int top = (mCameraBean.getCamera().getParameters().getPreviewSize().width - height) / 2;
+    int right = (mCameraBean.getCamera().getParameters().getPreviewSize().height + width) / 2;
+    int bottom = (mCameraBean.getCamera().getParameters().getPreviewSize().width + height) / 2;
+
+    return new Rect(left, top, right, bottom);
   }
 
   private int findDesiredDimensionInRange(int resolution, int hardMin, int hardMax) {
@@ -282,7 +285,7 @@ public final class CameraManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  private int initFromCameraParameters(CameraBean cameraBean, int displayRotation) {
+  private int getDisplayOrientation(CameraBean cameraBean, int displayRotation) {
     int cwRotationFromNaturalToDisplay;
     switch (displayRotation) {
       case Surface.ROTATION_0:
